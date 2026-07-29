@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مجوهرات حسن نصار | لوحة التحكم</title>
+<style>
+  :root{
+    --bg:#08080A;
+    --liquid-glass: rgba(24,24,28,0.45);
+    --glass-border: rgba(255,255,255,0.08);
+    --glass-edge: rgba(255,255,255,0.55);
+    --gold-1:#FFD60A;
+    --gold-2:#FF9F0A;
+    --cream:#F5F5F7;
+    --muted:#8E8E93;
+    --blue:#0A84FF;
+    --green:#30D158;
+    --red:#FF6961;
+    --ease: cubic-bezier(.22,.61,.36,1);
+    --sidebar-w: 220px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Tahoma,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--cream);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  .ambient{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(circle at 10% 10%, rgba(255,214,10,0.08), transparent 40%),
+      radial-gradient(circle at 90% 20%, rgba(10,132,255,0.10), transparent 45%),
+      radial-gradient(circle at 50% 100%, rgba(255,159,10,0.06), transparent 50%);
+  }
+  a{color:inherit;text-decoration:none;}
+
+  /* ===== glass base ===== */
+  .glass{
+    background:var(--liquid-glass);
+    backdrop-filter: blur(25px) saturate(140%);
+    -webkit-backdrop-filter: blur(25px) saturate(140%);
+    border:1px solid var(--glass-border);
+    border-radius:22px;
+    box-shadow: 0 16px 50px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+    position:relative;
+    overflow:hidden;
+  }
+  .glass::before{
+    content:"";
+    position:absolute; top:0; left:6%; right:6%; height:1px;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+    opacity:.5;
+  }
+
+  /* ===== layout ===== */
+  .app{ position:relative; z-index:1; display:flex; min-height:100vh; }
+
+  .sidebar{
+    width:var(--sidebar-w); flex-shrink:0; padding:20px 14px;
+    display:flex; flex-direction:column; gap:6px;
+    border-left:1px solid rgba(255,255,255,0.06);
+  }
+  .brand-row{ display:flex; align-items:center; gap:10px; padding:10px 8px 22px; }
+  .brand-row .mark{
+    width:38px;height:38px;border-radius:11px;
+    background:linear-gradient(145deg,var(--gold-1),var(--gold-2));
+    display:flex;align-items:center;justify-content:center;font-weight:700;color:#151007;font-size:14px;
+  }
+  .brand-row .txt b{ display:block; font-size:13.5px; }
+  .brand-row .txt small{ color:var(--muted); font-size:11px; }
+
+  .nav-item{
+    display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:12px;
+    font-size:13.5px; color:var(--muted); cursor:pointer; transition:all .2s var(--ease);
+  }
+  .nav-item .ic{ width:18px; text-align:center; }
+  .nav-item:hover{ background:rgba(255,255,255,0.04); color:var(--cream); }
+  .nav-item.active{
+    background:linear-gradient(120deg, rgba(255,214,10,0.14), rgba(255,159,10,0.08));
+    color:var(--cream); box-shadow:inset 0 0 0 1px rgba(255,159,10,0.25);
+  }
+  .nav-item:active{ transform:scale(0.97); }
+  .nav-section-label{ font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:1.5px; padding:16px 12px 6px; }
+
+  .main{ flex:1; min-width:0; display:flex; flex-direction:column; }
+
+  /* ===== ticker ===== */
+  .ticker-wrap{
+    margin:14px 16px 0; padding:0 4px;
+  }
+  .ticker{
+    display:flex; align-items:center; gap:0; padding:11px 18px; border-radius:16px;
+    overflow:hidden; white-space:nowrap; position:relative;
+  }
+  .ticker-track{
+    display:flex; gap:34px; animation: tickerScroll 26s linear infinite;
+  }
+  .ticker:hover .ticker-track{ animation-play-state:paused; }
+  @keyframes tickerScroll{
+    from{ transform:translateX(0); }
+    to{ transform:translateX(-50%); }
+  }
+  .tick-item{ font-size:12.5px; display:flex; align-items:center; gap:6px; color:var(--cream); }
+  .tick-item .k{ color:var(--muted); }
+  .tick-item .v{ font-weight:700; color:var(--gold-1); font-family:ui-monospace,Menlo,monospace; }
+  .tick-item .chip{
+    font-size:10.5px; padding:2px 6px; border-radius:6px;
+  }
+  .chip.up{ color:var(--green); background:rgba(48,209,88,0.12); }
+  .chip.down{ color:var(--red); background:rgba(255,105,97,0.12); }
+  .tick-sep{ width:1px; height:14px; background:rgba(255,255,255,0.12); }
+
+  /* ===== topbar ===== */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 22px 6px;
+  }
+  .topbar h1{ font-size:19px; font-weight:700; }
+  .topbar .who{
+    display:flex; align-items:center; gap:10px; padding:6px 6px 6px 14px; border-radius:14px;
+  }
+  .who .avatar{
+    width:34px;height:34px;border-radius:10px;
+    background:linear-gradient(145deg,var(--blue),#5AC8FA);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;
+  }
+  .who small{ color:var(--muted); display:block; font-size:10.5px; }
+
+  /* ===== content grid ===== */
+  .content{ padding:18px 22px 30px; display:flex; flex-direction:column; gap:18px; }
+
+  .kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  .kpi-card{ padding:18px; display:flex; flex-direction:column; gap:8px; }
+  .kpi-card .lbl{ font-size:12px; color:var(--muted); }
+  .kpi-card .val{ font-size:23px; font-weight:700; font-family:ui-monospace,Menlo,monospace; }
+  .kpi-card .delta{ font-size:11.5px; }
+
+  .row2{ display:grid; grid-template-columns:1.5fr 1fr; gap:14px; align-items:start; }
+
+  .panel{ padding:20px; }
+  .panel-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .panel-head h2{ font-size:14.5px; font-weight:700; }
+  .panel-head .muted{ font-size:11.5px; color:var(--muted); }
+
+  /* karat calculator */
+  .karat-input-row{
+    display:flex; align-items:center; gap:10px; margin-bottom:16px;
+  }
+  .karat-input-row label{ font-size:12.5px; color:var(--muted); white-space:nowrap; }
+  .karat-input-row input{
+    flex:1; padding:12px 14px; border-radius:12px; background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.08); color:var(--cream); font-size:16px;
+    font-weight:700; font-family:ui-monospace,Menlo,monospace; outline:none;
+    transition:all .3s var(--ease);
+  }
+  .karat-input-row input:focus{
+    border-color:var(--blue); box-shadow:0 0 0 4px rgba(10,132,255,0.18);
+    transform:scale(1.02); background:rgba(10,132,255,0.06);
+  }
+  .karat-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .karat-cell{
+    padding:14px 8px; text-align:center; border-radius:14px;
+    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07);
+    transition:transform .2s var(--ease);
+  }
+  .karat-cell:hover{ transform:translateY(-2px); }
+  .karat-cell .kt{ font-size:11px; color:var(--muted); margin-bottom:4px; }
+  .karat-cell .kv{ font-size:14.5px; font-weight:700; font-family:ui-monospace,Menlo,monospace; color:var(--gold-1); }
+
+  /* chart placeholder */
+  .chart-box{ height:160px; display:flex; align-items:flex-end; gap:6px; padding:0 4px; }
+  .bar{
+    flex:1; border-radius:6px 6px 0 0;
+    background:linear-gradient(180deg, var(--gold-1), var(--gold-2));
+    opacity:.85; transition:opacity .2s;
+  }
+  .bar:hover{ opacity:1; }
+  .chart-labels{ display:flex; justify-content:space-between; margin-top:8px; font-size:10.5px; color:var(--muted); }
+
+  /* quick actions */
+  .qa-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+  .qa-btn{
+    padding:16px 12px; border-radius:14px; text-align:center; cursor:pointer;
+    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+    transition:all .18s var(--ease); font-size:12.5px;
+  }
+  .qa-btn:active{ transform:scale(0.95); }
+  .qa-btn .ic{ font-size:20px; margin-bottom:6px; display:block; }
+  .qa-btn.gold{
+    background:linear-gradient(120deg, rgba(255,214,10,0.16), rgba(255,159,10,0.10));
+    border-color:rgba(255,159,10,0.3);
+  }
+
+  /* alerts list */
+  .alert-item{
+    display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:12px;
+    background:rgba(255,255,255,0.03); margin-bottom:8px; font-size:12.5px;
+  }
+  .alert-dot{ width:8px;height:8px;border-radius:50%; flex-shrink:0; }
+  .alert-dot.warn{ background:#FF9F0A; box-shadow:0 0 8px rgba(255,159,10,.6); }
+  .alert-dot.danger{ background:var(--red); box-shadow:0 0 8px rgba(255,105,97,.6); }
+  .alert-dot.info{ background:var(--blue); box-shadow:0 0 8px rgba(10,132,255,.6); }
+  .alert-item .t{ flex:1; }
+  .alert-item .time{ color:var(--muted); font-size:10.5px; }
+
+  /* spotlight */
+  #spotlightOverlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.55); backdrop-filter:blur(6px);
+    display:none; align-items:flex-start; justify-content:center; padding-top:14vh; z-index:100;
+  }
+  #spotlightOverlay.show{ display:flex; }
+  .spotlight-box{ width:100%; max-width:560px; padding:6px; }
+  .spotlight-box input{
+    width:100%; padding:16px 18px; border-radius:16px; font-size:16px;
+    background:rgba(20,20,24,0.9); border:1px solid rgba(255,255,255,0.12);
+    color:var(--cream); outline:none;
+  }
+  .spotlight-hint{ text-align:center; color:var(--muted); font-size:11.5px; margin-top:10px; }
+
+  @media (max-width:1000px){
+    .sidebar{ display:none; }
+    .kpi-grid{ grid-template-columns:repeat(2,1fr); }
+    .row2{ grid-template-columns:1fr; }
+    .karat-grid{ grid-template-columns:repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="ambient"></div>
+
+<div class="app">
+
+  <!-- ===== SIDEBAR ===== -->
+  <div class="sidebar glass" style="border-radius:0;">
+    <div class="brand-row">
+      <div class="mark">HN</div>
+      <div class="txt"><b>حسن نصار</b><small>الفرع الرئيسي</small></div>
+    </div>
+
+    <div class="nav-item active"><span class="ic">🏠</span> الرئيسية</div>
+    <div class="nav-item"><span class="ic">🧾</span> فاتورة بيع جديدة</div>
+    <div class="nav-item"><span class="ic">📦</span> المخزون بالعيار</div>
+    <div class="nav-item"><span class="ic">👥</span> العملاء</div>
+    <div class="nav-item"><span class="ic">🚚</span> الموردين</div>
+    <div class="nav-item"><span class="ic">🔨</span> حسابات الصاغة</div>
+    <div class="nav-item"><span class="ic">💰</span> الخزنة</div>
+
+    <div class="nav-section-label">تقارير وإعدادات</div>
+    <div class="nav-item"><span class="ic">📊</span> التقارير والجرد</div>
+    <div class="nav-item"><span class="ic">🖨️</span> باركود وملصقات</div>
+    <div class="nav-item"><span class="ic">⚙️</span> الإعدادات</div>
+    <div class="nav-item"><span class="ic">ℹ️</span> عن المطور</div>
+  </div>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+
+    <!-- floating ticker -->
+    <div class="ticker-wrap">
+      <div class="ticker glass">
+        <div class="ticker-track" id="tickerTrack"></div>
+      </div>
+    </div>
+
+    <div class="topbar">
+      <h1>الرئيسية</h1>
+      <div class="who glass">
+        <div>
+          <b style="font-size:12.5px;">حسن نصار</b>
+          <small>مالك المحل · متصل الآن</small>
+        </div>
+        <div class="avatar">ح ن</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- KPI CARDS -->
+      <div class="kpi-grid">
+        <div class="kpi-card glass">
+          <span class="lbl">مبيعات اليوم</span>
+          <span class="val">48,250 ج.م</span>
+          <span class="delta" style="color:var(--green);">▲ 12% عن أمس</span>
+        </div>
+        <div class="kpi-card glass">
+          <span class="lbl">رصيد الخزنة</span>
+          <span class="val">312,900 ج.م</span>
+          <span class="delta" style="color:var(--muted);">مطابق لكل الحركات</span>
+        </div>
+        <div class="kpi-card glass">
+          <span class="lbl">إجمالي وزن المخزون</span>
+          <span class="val">4,182.3 جم</span>
+          <span class="delta" style="color:var(--muted);">كل الأعيرة</span>
+        </div>
+        <div class="kpi-card glass">
+          <span class="lbl">فواتير اليوم</span>
+          <span class="val">27 فاتورة</span>
+          <span class="delta" style="color:var(--gold-1);">أعلى مبيعًا: عيار 21</span>
+        </div>
+      </div>
+
+      <div class="row2">
+        <!-- LEFT: chart + karat calculator -->
+        <div style="display:flex; flex-direction:column; gap:14px;">
+
+          <div class="panel glass">
+            <div class="panel-head">
+              <h2>حركة المبيعات هذا الأسبوع</h2>
+              <span class="muted">بالجنيه المصري</span>
+            </div>
+            <div class="chart-box" id="chartBox"></div>
+            <div class="chart-labels">
+              <span>سبت</span><span>أحد</span><span>إثنين</span><span>ثلاثاء</span><span>أربعاء</span><span>خميس</span><span>جمعة</span>
+            </div>
+          </div>
+
+          <div class="panel glass">
+            <div class="panel-head">
+              <h2>سعر الذهب اللحظي</h2>
+              <span class="muted" id="lastUpdate">آخر تحديث: الآن</span>
+            </div>
+            <div class="karat-input-row">
+              <label>سعر جرام عيار 21 (يدوي)</label>
+              <input type="number" id="basePrice" value="3850" step="1">
+              <button class="qa-btn gold" style="padding:12px 16px;" onclick="fetchLivePrice()">🔄 تحديث تلقائي</button>
+            </div>
+            <div class="karat-grid" id="karatGrid"></div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT: quick actions + alerts -->
+        <div style="display:flex; flex-direction:column; gap:14px;">
+
+          <div class="panel glass">
+            <div class="panel-head"><h2>إجراءات سريعة</h2></div>
+            <div class="qa-grid">
+              <div class="qa-btn gold"><span class="ic">🧾</span>فاتورة بيع</div>
+              <div class="qa-btn"><span class="ic">♻️</span>شراء كسر</div>
+              <div class="qa-btn"><span class="ic">📦</span>إضافة صنف</div>
+              <div class="qa-btn"><span class="ic">🖨️</span>طباعة باركود</div>
+            </div>
+          </div>
+
+          <div class="panel glass">
+            <div class="panel-head">
+              <h2>تنبيهات ذكية</h2>
+              <span class="muted">3 تنبيهات</span>
+            </div>
+            <div class="alert-item">
+              <div class="alert-dot warn"></div>
+              <div class="t">مخزون عيار 18 وصل للحد الأدنى (82 جم)</div>
+              <div class="time">قبل ساعة</div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-dot danger"></div>
+              <div class="t">رصيد الصائغ "كريم" تجاوز الحد المسموح</div>
+              <div class="time">اليوم</div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-dot info"></div>
+              <div class="t">لم يتم عمل نسخة احتياطية منذ 4 أيام</div>
+              <div class="time">تذكير</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===== SPOTLIGHT COMMAND PALETTE ===== -->
+<div id="spotlightOverlay">
+  <div class="spotlight-box">
+    <input id="spotlightInput" placeholder="اكتب أمرًا... مثال: فاتورة جديدة، رقم هاتف عميل، جرد عيار 21" autocomplete="off">
+    <div class="spotlight-hint">اضغط Esc للإغلاق &nbsp;·&nbsp; Ctrl/Cmd + K لفتح شريط الأوامر في أي وقت</div>
+  </div>
+</div>
+
+<script>
+/* ===== ticker data (duplicated once for seamless loop) ===== */
+const tickItems = [
+  {k:'عيار 24', v:'٤٤٠٠ ج.م', chip:'up', chipv:'+0.6%'},
+  {k:'عيار 21', v:'٣٨٥٠ ج.م', chip:'up', chipv:'+0.6%'},
+  {k:'عيار 18', v:'٣٣٠٠ ج.م', chip:'down', chipv:'-0.2%'},
+  {k:'عيار 14', v:'٢٥٦٧ ج.م', chip:'up', chipv:'+0.6%'},
+  {k:'حركة المخزون اليوم', v:'٣١ عملية'},
+  {k:'الفرع', v:'الفرع الرئيسي'},
+  {k:'المستخدم', v:'حسن نصار'},
+];
+function renderTicker(){
+  const track = document.getElementById('tickerTrack');
+  let html = '';
+  for(let rep=0; rep<2; rep++){
+    tickItems.forEach(it=>{
+      html += `<div class="tick-item"><span class="k">${it.k}</span><span class="v">${it.v}</span>`
+        + (it.chip ? `<span class="chip ${it.chip}">${it.chipv}</span>` : '') + `</div><div class="tick-sep"></div>`;
+    });
+  }
+  track.innerHTML = html;
+}
+renderTicker();
+
+/* ===== karat price calculator =====
+   Formula (as specified):
+   price18 = price21 * (18/21)
+   price24 = price21 * (24/21)
+   Generalized for any karat: priceK = price21 * (K/21)
+*/
+const KARATS = [24,21,18,14,12,9];
+function renderKaratGrid(){
+  const base = parseFloat(document.getElementById('basePrice').value) || 0;
+  const grid = document.getElementById('karatGrid');
+  grid.innerHTML = KARATS.map(k=>{
+    const price = (base * (k/21)).toFixed(2);
+    return `<div class="karat-cell"><div class="kt">عيار ${k}</div><div class="kv">${price} ج.م</div></div>`;
+  }).join('');
+}
+document.getElementById('basePrice').addEventListener('input', renderKaratGrid);
+renderKaratGrid();
+
+function fetchLivePrice(){
+  // Placeholder slot for a live gold price API integration.
+  // Once a specific provider/API key is chosen, this function will
+  // fetch price21 from that source and call renderKaratGrid() automatically.
+  document.getElementById('lastUpdate').textContent = 'آخر تحديث: الآن (يدوي)';
+  const btn = event.target;
+  btn.style.opacity = .6;
+  setTimeout(()=>{ btn.style.opacity = 1; }, 400);
+  alert('لم يتم ربط مزود سعر الذهب اللحظي بعد.\nحدد المصدر (API) اللي بتتعامل معاه وهنربطه هنا مباشرة.');
+}
+
+/* ===== fake weekly chart ===== */
+function renderChart(){
+  const data = [38,52,41,60,47,73,55];
+  const max = Math.max(...data);
+  const box = document.getElementById('chartBox');
+  box.innerHTML = data.map(v=>`<div class="bar" style="height:${(v/max*100)}%"></div>`).join('');
+}
+renderChart();
+
+/* ===== spotlight command palette (Cmd/Ctrl+K) ===== */
+const overlay = document.getElementById('spotlightOverlay');
+const spInput = document.getElementById('spotlightInput');
+document.addEventListener('keydown', (e)=>{
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){
+    e.preventDefault();
+    overlay.classList.add('show');
+    spInput.value = '';
+    setTimeout(()=>spInput.focus(), 50);
+  } else if(e.key === 'Escape'){
+    overlay.classList.remove('show');
+  }
+});
+overlay.addEventListener('click', (e)=>{ if(e.target === overlay) overlay.classList.remove('show'); });
+
+/* ===== barcode scanner listener (keyboard-wedge style) =====
+   Most USB barcode scanners type digits very fast then send Enter.
+   This listens globally, buffers fast keystrokes, and on Enter
+   treats the buffer as a scanned code (only when not typing in a field).
+*/
+let scanBuffer = '';
+let lastKeyTime = 0;
+document.addEventListener('keydown', (e)=>{
+  if(document.activeElement.tagName === 'INPUT') return; // don't hijack normal typing
+  const now = Date.now();
+  if(now - lastKeyTime > 60) scanBuffer = ''; // reset if typing is too slow to be a scanner
+  lastKeyTime = now;
+  if(e.key === 'Enter'){
+    if(scanBuffer.length >= 4){
+      console.log('Barcode scanned:', scanBuffer);
+      alert('تم مسح الباركود: ' + scanBuffer + '\n(سيتم فتح بيانات القطعة تلقائياً في وحدة المخزون/الفاتورة)');
+    }
+    scanBuffer = '';
+  } else if(e.key.length === 1){
+    scanBuffer += e.key;
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مجوهرات حسن نصار | النظام الرئيسي</title>
+<style>
+  :root{
+    --bg:#08080A; --liquid-glass: rgba(24,24,28,0.45); --glass-border: rgba(255,255,255,0.08);
+    --gold-1:#FFD60A; --gold-2:#FF9F0A; --cream:#F5F5F7; --muted:#8E8E93; --blue:#0A84FF;
+    --green:#30D158; --red:#FF6961; --ease: cubic-bezier(.22,.61,.36,1); --sidebar-w:230px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{ font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Tahoma,Arial,sans-serif; background:var(--bg); color:var(--cream); min-height:100vh; }
+  a{ text-decoration:none; color:inherit; }
+  .ambient{ position:fixed; inset:0; z-index:0; pointer-events:none;
+    background: radial-gradient(circle at 10% 10%, rgba(255,214,10,0.08), transparent 40%), radial-gradient(circle at 90% 20%, rgba(10,132,255,0.10), transparent 45%), radial-gradient(circle at 50% 100%, rgba(255,159,10,0.06), transparent 50%); }
+  .glass{ background:var(--liquid-glass); backdrop-filter: blur(25px) saturate(140%); -webkit-backdrop-filter: blur(25px) saturate(140%);
+    border:1px solid var(--glass-border); border-radius:22px; box-shadow:0 16px 50px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05); position:relative; overflow:hidden; }
+  .glass::before{ content:""; position:absolute; top:0; left:6%; right:6%; height:1px; background:linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent); opacity:.5; }
+
+  .app{ position:relative; z-index:1; display:flex; min-height:100vh; }
+  .sidebar{ width:var(--sidebar-w); flex-shrink:0; padding:20px 14px; border-left:1px solid rgba(255,255,255,0.06); display:flex; flex-direction:column; gap:4px; }
+  .brand-row{ display:flex; align-items:center; gap:10px; padding:10px 8px 22px; }
+  .brand-row .mark{ width:38px;height:38px;border-radius:11px; background:linear-gradient(145deg,var(--gold-1),var(--gold-2)); display:flex;align-items:center;justify-content:center;font-weight:700;color:#151007;font-size:14px; }
+  .brand-row .txt b{ display:block; font-size:13.5px; } .brand-row .txt small{ color:var(--muted); font-size:11px; }
+  .nav-section-label{ font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:1.5px; padding:16px 12px 6px; }
+  .nav-item{ display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:12px; font-size:13px; color:var(--muted); cursor:pointer; transition:all .2s var(--ease); }
+  .nav-item .ic{ width:18px; text-align:center; }
+  .nav-item:hover{ background:rgba(255,255,255,0.04); color:var(--cream); }
+  .nav-item.active{ background:linear-gradient(120deg, rgba(255,214,10,0.14), rgba(255,159,10,0.08)); color:var(--cream); box-shadow:inset 0 0 0 1px rgba(255,159,10,0.25); }
+  .nav-item:active{ transform:scale(0.97); }
+
+  .main{ flex:1; min-width:0; display:flex; flex-direction:column; }
+  .ticker-wrap{ margin:14px 16px 0; padding:0 4px; }
+  .ticker{ display:flex; align-items:center; padding:11px 18px; border-radius:16px; overflow:hidden; white-space:nowrap; }
+  .ticker-track{ display:flex; gap:34px; animation: tickerScroll 26s linear infinite; }
+  .ticker:hover .ticker-track{ animation-play-state:paused; }
+  @keyframes tickerScroll{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+  .tick-item{ font-size:12.5px; display:flex; align-items:center; gap:6px; }
+  .tick-item .k{ color:var(--muted); } .tick-item .v{ font-weight:700; color:var(--gold-1); font-family:ui-monospace,Menlo,monospace; }
+  .tick-sep{ width:1px; height:14px; background:rgba(255,255,255,0.12); }
+
+  .content{ padding:20px 24px 30px; flex:1; }
+  .content h1{ font-size:20px; margin-bottom:6px; }
+  .content .sub{ color:var(--muted); font-size:13px; margin-bottom:22px; }
+
+  .module-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .mcard{ padding:22px; display:block; transition:transform .2s var(--ease); }
+  .mcard:hover{ transform:translateY(-3px); }
+  .mcard:active{ transform:scale(0.97); }
+  .mcard .ic{ font-size:26px; margin-bottom:12px; display:block; }
+  .mcard .t{ font-size:14.5px; font-weight:700; margin-bottom:6px; }
+  .mcard .d{ font-size:12px; color:var(--muted); line-height:1.7; }
+  .mcard .go{ margin-top:14px; font-size:11.5px; color:var(--gold-1); }
+
+  .setup-gate{ display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
+  .setup-card{ max-width:440px; width:100%; padding:32px; text-align:center; }
+  .btn{ padding:12px 16px; border:none; border-radius:12px; font-size:13.5px; font-weight:700; cursor:pointer; width:100%; transition:transform .18s var(--ease); }
+  .btn:active{ transform:scale(0.96); }
+  .btn-gold{ background:linear-gradient(120deg,var(--gold-1),var(--gold-2)); color:#151007; box-shadow:0 8px 22px rgba(255,159,10,.28); }
+
+  @media (max-width:1000px){ .sidebar{ display:none; } .module-grid{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:640px){ .module-grid{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="ambient"></div>
+
+<div class="setup-gate" id="gateScreen">
+  <div class="setup-card glass">
+    <h1 style="font-size:18px;margin-bottom:10px;">الاتصال بقاعدة بيانات المحل</h1>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:20px;">اختر مجلد "مجوهرات حسن نصار" لعرض سعر الذهب الموحّد في الشريط العلوي.</p>
+    <button class="btn btn-gold" onclick="DB.pickFolder().then(afterConnect)">📁 اختيار مجلد البيانات</button>
+    <p style="color:var(--muted);font-size:11px;margin-top:14px;">يمكنك أيضاً تخطي هذه الخطوة والدخول مباشرة لأي وحدة — كل وحدة تطلب الاتصال بنفسها عند فتحها.</p>
+    <button class="btn" style="background:rgba(255,255,255,0.06);color:var(--cream);border:1px solid rgba(255,255,255,0.1);margin-top:8px;" onclick="skipGate()">تخطي والدخول للنظام</button>
+  </div>
+</div>
+
+<div class="app" id="appScreen" style="display:none;">
+  <div class="sidebar glass" style="border-radius:0;">
+    <div class="brand-row">
+      <div class="mark">HN</div>
+      <div class="txt"><b>حسن نصار</b><small>الفرع الرئيسي</small></div>
+    </div>
+    <div class="nav-item active"><span class="ic">🏠</span> الرئيسية</div>
+    <a href="hassan-nassar-jewelry-02-dashboard.html"><div class="nav-item"><span class="ic">📈</span> لوحة التحكم</div></a>
+    <a href="hassan-nassar-jewelry-04-invoice.html"><div class="nav-item"><span class="ic">🧾</span> فاتورة بيع جديدة</div></a>
+    <a href="hassan-nassar-jewelry-03-data-core.html"><div class="nav-item"><span class="ic">📦</span> المخزون والعملاء والموردين</div></a>
+    <a href="hassan-nassar-jewelry-03-data-core.html"><div class="nav-item"><span class="ic">💰</span> الخزنة وحسابات الصاغة</div></a>
+    <a href="hassan-nassar-jewelry-07-transactions.html"><div class="nav-item"><span class="ic">♻️</span> الكسر والاسترجاع والحجز</div></a>
+    <a href="hassan-nassar-jewelry-07-transactions.html"><div class="nav-item"><span class="ic">🛠️</span> التفصيل والصيانة</div></a>
+
+    <div class="nav-section-label">تقارير وإدارة</div>
+    <a href="hassan-nassar-jewelry-05-barcode-reports.html"><div class="nav-item"><span class="ic">🖨️</span> الباركود والتقارير</div></a>
+    <a href="hassan-nassar-jewelry-08-finance-final.html"><div class="nav-item"><span class="ic">💵</span> المصروفات والمقاصة</div></a>
+    <a href="hassan-nassar-jewelry-08-finance-final.html"><div class="nav-item"><span class="ic">🖥️</span> شاشة العميل والشهادات</div></a>
+    <a href="hassan-nassar-jewelry-06-settings-users.html"><div class="nav-item"><span class="ic">⚙️</span> الإعدادات والمستخدمين</div></a>
+    <a href="hassan-nassar-jewelry-06-settings-users.html"><div class="nav-item"><span class="ic">ℹ️</span> عن المطور</div></a>
+  </div>
+
+  <div class="main">
+    <div class="ticker-wrap">
+      <div class="ticker glass"><div class="ticker-track" id="tickerTrack"></div></div>
+    </div>
+
+    <div class="content">
+      <h1>مرحباً بك في نظام إدارة مجوهرات حسن نصار</h1>
+      <div class="sub">اختر الوحدة التي تريد العمل عليها — جميع الوحدات متصلة بنفس مجلد البيانات وتتحدث مع بعضها تلقائياً.</div>
+
+      <div class="module-grid">
+        <a href="hassan-nassar-jewelry-02-dashboard.html"><div class="mcard glass"><span class="ic">📈</span><div class="t">لوحة التحكم</div><div class="d">نظرة شاملة على المبيعات، الخزنة، والتنبيهات الذكية.</div><div class="go">فتح ←</div></div></a>
+        <a href="hassan-nassar-jewelry-04-invoice.html"><div class="mcard glass"><span class="ic">🧾</span><div class="t">فاتورة بيع جديدة</div><div class="d">بحث ذكي، حساب تلقائي، دفع متعدد، وخصم فوري من المخزون.</div><div class="go">فتح ←</div></div></a>
+        <a href="hassan-nassar-jewelry-03-data-core.html"><div class="mcard glass"><span class="ic">📦</span><div class="t">المخزون · العملاء · الموردين · الخزنة · الصاغة</div><div class="d">قاعدة البيانات الأساسية لكل عمليات المحل.</div><div class="go">فتح ←</div></div></a>
+        <a href="hassan-nassar-jewelry-05-barcode-reports.html"><div class="mcard glass"><span class="ic">🖨️</span><div class="t">الباركود والتقارير</div><div class="d">توليد وطباعة ملصقات، وتقارير جرد مرنة قابلة للتصدير.</div><div class="go">فتح ←</div></div></a>
+        <a href="hassan-nassar-jewelry-06-settings-users.html"><div class="mcard glass"><span class="ic">⚙️</span><div class="t">الإعدادات · المستخدمين · عن المطور</div><div class="d">سعر الذهب الموحد، الصلاحيات، وسجل العمليات.</div><div class="go">فتح ←</div></div></a>
+        <a href="hassan-nassar-jewelry-07-transactions.html"><div class="mcard glass"><span class="ic">♻️</span><div class="t">الكسر · الاسترجاع · الحجز · الصيانة</div><div class="d">كل عمليات ما بعد البيع في مكان واحد.</div><div class="go">فتح ←</div></div></a>
+        <a href="hassan-nassar-jewelry-08-finance-final.html"><div class="mcard glass"><span class="ic">💵</span><div class="t">المصروفات · المقاصة · شاشة العميل · الشهادات</div><div class="d">الإدارة المالية الكاملة وشهادات الضمان.</div><div class="go">فتح ←</div></div></a>
+        <a href="hassan-nassar-jewelry-01-setup.html"><div class="mcard glass"><span class="ic">🔐</span><div class="t">تأسيس النظام والتراخيص</div><div class="d">شاشة المطور واعتماد التراخيص (تُستخدم مرة واحدة فقط).</div><div class="go">فتح ←</div></div></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function idbOpen(){ return new Promise((res,rej)=>{ const r=indexedDB.open('hn_db_meta',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function idbGet(k){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction('kv','readonly'); const rq=tx.objectStore('kv').get(k); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error); }); }
+async function idbSet(k,v){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction('kv','readwrite'); tx.objectStore('kv').put(v,k); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); }
+const SHOP_NAME = 'مجوهرات حسن نصار';
+const DB = {
+  supported:'showDirectoryPicker' in window, dirHandle:null, shopHandle:null, connected:false,
+  async tryAutoConnect(){
+    if(!this.supported){ this.connected=true; return true; }
+    try{ const h=await idbGet('rootDirHandle'); if(!h) return false;
+      const perm=await h.queryPermission({mode:'readwrite'});
+      if(perm!=='granted'){ const req=await h.requestPermission({mode:'readwrite'}); if(req!=='granted') return false; }
+      this.dirHandle=h; this.shopHandle=await h.getDirectoryHandle(SHOP_NAME,{create:true}); this.connected=true; return true;
+    }catch(e){ return false; }
+  },
+  async pickFolder(){
+    if(!this.supported){ this.connected=true; return; }
+    this.dirHandle=await window.showDirectoryPicker({mode:'readwrite'});
+    await idbSet('rootDirHandle', this.dirHandle);
+    this.shopHandle=await this.dirHandle.getDirectoryHandle(SHOP_NAME,{create:true});
+    this.connected=true;
+  },
+  async read(c,fb){
+    if(this.supported && this.shopHandle){ try{ const fh=await this.shopHandle.getFileHandle(c+'.json'); const f=await fh.getFile(); return JSON.parse(await f.text()); }catch(e){ return fb; } }
+    const v=await idbGet('fallback_'+c); return v!==undefined? v: fb;
+  }
+};
+
+async function afterConnect(){
+  document.getElementById('gateScreen').style.display='none';
+  document.getElementById('appScreen').style.display='flex';
+  const settings = await DB.read('settings', {});
+  const base = settings.basePrice21 || 3850;
+  const inv = await DB.read('inventory', []);
+  const safe = await DB.read('safe', []);
+  const balance = safe.reduce((s,t)=> s + (t.type==='income'? t.amount : -t.amount), 0);
+
+  const karats = [24,21,18,14];
+  const items = karats.map(k=>({k, v:(base*(k/21)).toFixed(0)}));
+  const track = document.getElementById('tickerTrack');
+  let html='';
+  for(let rep=0; rep<2; rep++){
+    items.forEach(it=>{ html += `<div class="tick-item"><span class="k">عيار ${it.k}</span><span class="v">${it.v} ج.م</span></div><div class="tick-sep"></div>`; });
+    html += `<div class="tick-item"><span class="k">رصيد الخزنة</span><span class="v">${balance.toLocaleString('ar-EG',{maximumFractionDigits:0})} ج.م</span></div><div class="tick-sep"></div>`;
+    html += `<div class="tick-item"><span class="k">عدد أصناف المخزون</span><span class="v">${inv.filter(i=>i.status==='available').length}</span></div><div class="tick-sep"></div>`;
+    html += `<div class="tick-item"><span class="k">الفرع</span><span class="v">الفرع الرئيسي</span></div><div class="tick-sep"></div>`;
+  }
+  track.innerHTML = html;
+}
+function skipGate(){
+  document.getElementById('gateScreen').style.display='none';
+  document.getElementById('appScreen').style.display='flex';
+  document.getElementById('tickerTrack').innerHTML = '<div class="tick-item"><span class="k">اختر وحدة من القائمة للبدء</span></div>';
+}
+(async function boot(){ const ok = await DB.tryAutoConnect(); if(ok) afterConnect(); })();
+</script>
+</body>
+</html>
