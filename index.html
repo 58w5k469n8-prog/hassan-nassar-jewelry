@@ -177,7 +177,17 @@ function skipGate(){
   document.getElementById('appScreen').style.display='flex';
   document.getElementById('tickerTrack').innerHTML = '<div class="tick-item"><span class="k">اختر وحدة من القائمة للبدء</span></div>';
 }
-(async function boot(){ const ok = await DB.tryAutoConnect(); if(ok) afterConnect(); })();
+(async function boot(){
+  // First-time visitors (no completed setup/license yet) go straight to the setup screen.
+  try{
+    const setup = JSON.parse(localStorage.getItem('hn_jewelry_setup_v1') || 'null');
+    if(!setup || !setup.license || !setup.owner){
+      window.location.href = 'hassan-nassar-jewelry-01-setup.html';
+      return;
+    }
+  }catch(e){}
+  const ok = await DB.tryAutoConnect(); if(ok) afterConnect();
+})();
 </script>
 </body>
 </html>
