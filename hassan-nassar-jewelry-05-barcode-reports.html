@@ -267,7 +267,7 @@ function runReport(){
 
   lastReportRows = rows;
   const totalWeight = rows.reduce((s,i)=>s+i.netW,0);
-  const totalValue = rows.reduce((s,i)=>s + (i.netW*3850*(i.karat/21)) + i.feeRetail, 0); // uses manual base price of 21 = 3850 (synced from settings in full build)
+  const totalValue = rows.reduce((s,i)=>s + (i.netW*3850*(i.karat/21)) + (i.feeRetail*i.netW), 0); // uses manual base price of 21 = 3850 (synced from settings in full build)
   const availCount = rows.filter(i=>i.status==='available').length;
 
   document.getElementById('kpiCount').textContent = rows.length;
@@ -278,7 +278,7 @@ function runReport(){
   document.getElementById('reportEmpty').style.display = rows.length ? 'none' : 'block';
   document.getElementById('reportBody').innerHTML = rows.map(i=>{
     const sup = DATA.suppliers.find(s=>s.id===i.supplierId);
-    const val = (i.netW*3850*(i.karat/21)) + i.feeRetail;
+    const val = (i.netW*3850*(i.karat/21)) + (i.feeRetail*i.netW);
     return `<tr>
       <td style="font-family:ui-monospace,Menlo,monospace;">${i.code}</td>
       <td>${i.name}</td><td>${i.karat}</td><td>${i.netW.toFixed(2)} جم</td>
