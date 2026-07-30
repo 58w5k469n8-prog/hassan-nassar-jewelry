@@ -94,18 +94,28 @@
 <style>
   .receipt-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(8px); z-index:200; display:none; align-items:center; justify-content:center; padding:20px; }
   .receipt-overlay.show{ display:flex; }
-  .receipt-box{ background:#fff; color:#111; border-radius:16px; max-width:380px; width:100%; max-height:88vh; overflow-y:auto; padding:0; }
-  #receiptPrint{ padding:26px 22px; }
-  #receiptPrint .r-head{ text-align:center; margin-bottom:14px; }
-  #receiptPrint .r-logo{ width:56px;height:56px;border-radius:14px; margin:0 auto 8px; background:linear-gradient(145deg,#FFD60A,#FF9F0A); display:flex;align-items:center;justify-content:center;font-weight:700;color:#151007;font-size:20px; }
-  #receiptPrint .r-shop{ font-size:16px; font-weight:700; }
-  #receiptPrint .r-meta{ font-size:11px; color:#666; margin-top:2px; }
-  #receiptPrint hr{ border:none; border-top:1px dashed #ccc; margin:12px 0; }
-  #receiptPrint table{ width:100%; border-collapse:collapse; font-size:11.5px; }
-  #receiptPrint th{ text-align:right; color:#666; font-weight:600; padding:5px 4px; border-bottom:1px solid #ddd; }
-  #receiptPrint td{ padding:6px 4px; border-bottom:1px solid #f0f0f0; }
-  #receiptPrint .r-total{ display:flex; justify-content:space-between; font-size:15px; font-weight:700; margin-top:10px; padding-top:10px; border-top:2px solid #111; }
-  #receiptPrint .r-foot{ text-align:center; font-size:11px; color:#888; margin-top:16px; }
+  .receipt-box{ background:#fdfcf6; color:#111; border-radius:10px; max-width:560px; width:100%; max-height:92vh; overflow-y:auto; padding:0; }
+  #receiptPrint{ padding:20px 22px; font-family:"Traditional Arabic","Arial",serif; border:2px solid #111; margin:10px; }
+  #receiptPrint .r-topline{ display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #111; padding-bottom:10px; margin-bottom:8px; }
+  #receiptPrint .r-btc{ width:56px;height:56px;border:2px solid #111; border-radius:50%; display:flex;align-items:center;justify-content:center; font-weight:700; font-size:13px; text-align:center; flex-shrink:0; }
+  #receiptPrint .r-btc-txt{ font-size:9px; text-align:center; margin-top:2px; line-height:1.3; }
+  #receiptPrint .r-center{ text-align:center; flex:1; }
+  #receiptPrint .r-shopname{ font-size:14px; font-weight:700; }
+  #receiptPrint .r-bigbrand{ font-size:26px; font-weight:900; letter-spacing:1px; margin-top:2px; }
+  #receiptPrint .r-bigsub{ font-size:10px; color:#333; margin-top:1px; }
+  #receiptPrint .r-karat-row{ display:flex; justify-content:space-between; margin-bottom:8px; }
+  #receiptPrint .r-karat-box{ border:2px solid #111; border-radius:8px; padding:6px 20px; font-size:15px; font-weight:700; text-align:center; }
+  #receiptPrint .r-title{ text-align:center; font-size:17px; font-weight:700; margin-bottom:2px; }
+  #receiptPrint .r-invno{ text-align:center; color:#c00; font-weight:900; font-size:17px; letter-spacing:2px; margin-bottom:8px; }
+  #receiptPrint .r-line{ display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px; border-bottom:1px dotted #999; padding-bottom:3px; }
+  #receiptPrint table.ledger{ width:100%; border-collapse:collapse; margin-top:8px; font-size:10.5px; }
+  #receiptPrint table.ledger th, #receiptPrint table.ledger td{ border:1px solid #111; padding:4px 3px; text-align:center; }
+  #receiptPrint table.ledger th{ background:#f0ede0; font-weight:700; }
+  #receiptPrint table.ledger td.bayan{ text-align:right; padding-right:6px; }
+  #receiptPrint .r-footer{ display:flex; justify-content:space-between; align-items:flex-end; margin-top:14px; font-size:11px; }
+  #receiptPrint .r-recipient div{ margin-bottom:4px; }
+  #receiptPrint .r-stamp{ border:2px solid #900; color:#900; border-radius:50%; width:100px; height:100px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:8.5px; font-weight:700; transform:rotate(-8deg); opacity:0.75; line-height:1.3; }
+  #receiptPrint .r-bottom{ text-align:center; font-size:9.5px; color:#333; margin-top:10px; border-top:1px solid #999; padding-top:6px; }
   .receipt-actions{ display:flex; gap:8px; padding:16px 22px 22px; }
   .receipt-actions button{ flex:1; padding:12px; border:none; border-radius:12px; font-size:12.5px; font-weight:700; cursor:pointer; }
   .ra-print{ background:#eee; color:#111; }
@@ -204,20 +214,64 @@
 <div class="receipt-overlay" id="receiptOverlay">
   <div class="receipt-box">
     <div id="receiptPrint">
-      <div class="r-head">
-        <div class="r-logo">HN</div>
-        <div class="r-shop">مجوهرات حسن نصار</div>
-        <div class="r-meta" id="rInvNo">—</div>
-        <div class="r-meta" id="rDate">—</div>
+      <div class="r-topline">
+        <div>
+          <div class="r-btc">BTC</div>
+          <div class="r-btc-txt">موزع معتمد<br>لشركة BTC<br>للسبائك</div>
+        </div>
+        <div class="r-center">
+          <div class="r-shopname">مصوغات ومجوهرات<br>حسن ومصطفى نصار</div>
+        </div>
+        <div class="r-center">
+          <div class="r-bigbrand">إيچيبت چولد</div>
+          <div class="r-bigsub">لتصنيع الذهب والمجوهرات</div>
+        </div>
       </div>
-      <hr>
-      <div class="r-meta" style="margin-bottom:8px;">العميل: <b id="rCustName">—</b> · <span id="rCustPhone">—</span></div>
-      <table>
-        <thead><tr><th>الصنف</th><th>الوزن</th><th>الإجمالي</th></tr></thead>
+
+      <div class="r-karat-row">
+        <div class="r-karat-box">عيار ٢١</div>
+        <div class="r-karat-box">عيار ١٨</div>
+      </div>
+
+      <div class="r-title">فاتورة</div>
+      <div class="r-invno" id="rInvNo">٠٠٠٠٠٠٠</div>
+
+      <div class="r-line"><span>السويس فى :</span><span id="rDate">— / — / ٢٠٢—م</span></div>
+      <div class="r-line"><span>مطلوب من السيد :</span><span id="rCustName">.....................</span></div>
+      <div class="r-line"><span>رقم التليفون العميل :</span><span id="rCustPhone">.....................</span></div>
+
+      <table class="ledger">
+        <thead>
+          <tr>
+            <th rowspan="2">البيان</th>
+            <th colspan="2">الوزن</th>
+            <th colspan="2">فئة</th>
+            <th rowspan="2">عدد</th>
+            <th rowspan="2">عيار</th>
+            <th colspan="2">القيمة</th>
+          </tr>
+          <tr>
+            <th>جرام</th><th>مللى</th>
+            <th>جنيه</th><th>قرش</th>
+            <th>جنيه</th><th>قرش</th>
+          </tr>
+        </thead>
         <tbody id="rItemsBody"></tbody>
       </table>
-      <div class="r-total"><span>الإجمالي</span><span id="rGrand">0.00 ج.م</span></div>
-      <div class="r-foot">شكراً لتعاملكم مع مجوهرات حسن نصار<br>+201061947000</div>
+
+      <div class="r-footer">
+        <div class="r-recipient">
+          <div>المستلم</div>
+          <div>Name : <span id="rCustName2">.....................</span></div>
+          <div>Sig : .....................</div>
+        </div>
+        <div class="r-stamp">البيع<br>بسعر المصنع<br>مصوغات ومجوهرات<br>حسن ومصطفى نصار</div>
+      </div>
+
+      <div class="r-bottom">
+        العنوان : ٢٦ شارع مصطفى صدقى بالأربعين — ت : ٠٦٢/٣٤٤١٤٢٢ — م : ٠١٢٢١٤٠٠٨٨٨<br>
+        رقم التسجيل بضريبة المبيعات : ١١٩ — ١٧٤ — ٢٠٥
+      </div>
     </div>
     <div class="receipt-actions">
       <button class="ra-print" onclick="window.print()">🖨️ طباعة</button>
@@ -480,16 +534,48 @@ async function saveInvoice(){
   resetInvoice(true);
 }
 
+function toArabicDigits(str){
+  const map = {'0':'٠','1':'١','2':'٢','3':'٣','4':'٤','5':'٥','6':'٦','7':'٧','8':'٨','9':'٩'};
+  return String(str).replace(/[0-9]/g, d=>map[d]);
+}
+function poundsQirsh(value){
+  const pounds = Math.floor(value);
+  const qirsh = Math.round((value - pounds) * 100);
+  return { p: toArabicDigits(pounds), q: toArabicDigits(qirsh) };
+}
+
 function renderReceipt(invoice, customer){
-  document.getElementById('rInvNo').textContent = invoice.no;
-  document.getElementById('rDate').textContent = new Date(invoice.at).toLocaleString('ar-EG');
+  document.getElementById('rInvNo').textContent = toArabicDigits(invoice.no.replace(/\D/g,'').padStart(7,'0'));
+  const d = new Date(invoice.at);
+  document.getElementById('rDate').textContent = toArabicDigits(d.getDate())+' / '+toArabicDigits(d.getMonth()+1)+' / '+toArabicDigits(d.getFullYear())+'م';
   document.getElementById('rCustName').textContent = customer.name;
+  document.getElementById('rCustName2').textContent = customer.name;
   document.getElementById('rCustPhone').textContent = customer.phone;
-  document.getElementById('rItemsBody').innerHTML = invoice.items.map(c=>{
+
+  let rowsHtml = invoice.items.map(c=>{
     const total = (c.netW*c.pricePerGram) + (c.fee*c.netW);
-    return `<tr><td>${c.name}</td><td>${c.netW.toFixed(2)} جم</td><td>${total.toFixed(2)}</td></tr>`;
+    const gram = Math.floor(c.netW);
+    const milli = Math.round((c.netW-gram)*1000);
+    const rate = poundsQirsh(c.pricePerGram);
+    const val = poundsQirsh(total);
+    return `<tr>
+      <td class="bayan">${c.name}</td>
+      <td>${toArabicDigits(gram)}</td><td>${toArabicDigits(milli)}</td>
+      <td>${rate.p}</td><td>${rate.q}</td>
+      <td>١</td>
+      <td>${toArabicDigits(c.karat)}</td>
+      <td>${val.p}</td><td>${val.q}</td>
+    </tr>`;
   }).join('');
-  document.getElementById('rGrand').textContent = invoice.grand.toFixed(2) + ' ج.م';
+
+  const grandVal = poundsQirsh(invoice.grand);
+  rowsHtml += `<tr style="font-weight:700;background:#f0ede0;">
+    <td class="bayan">الإجمالي</td><td colspan="4"></td><td colspan="2"></td><td>${grandVal.p}</td><td>${grandVal.q}</td>
+  </tr>`;
+  // pad with a couple of empty ledger rows for the authentic paper-invoice look
+  for(let i=0;i<2;i++){ rowsHtml += `<tr><td class="bayan">&nbsp;</td><td colspan="8"></td></tr>`; }
+
+  document.getElementById('rItemsBody').innerHTML = rowsHtml;
 }
 
 async function downloadReceiptImage(){
