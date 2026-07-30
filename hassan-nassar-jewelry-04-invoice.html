@@ -123,7 +123,7 @@
       </div>
 
       <table>
-        <thead><tr><th>الصنف</th><th>الوزن</th><th>سعر الجرام</th><th>المصنعية</th><th>الإجمالي</th><th></th></tr></thead>
+        <thead><tr><th>الصنف</th><th>الوزن</th><th>سعر الجرام</th><th>مصنعية الجرام</th><th>الإجمالي</th><th></th></tr></thead>
         <tbody id="itemsBody"></tbody>
       </table>
       <div class="empty" id="itemsEmpty">لم تتم إضافة أي أصناف بعد — ابحث عن صنف بالأعلى لإضافته</div>
@@ -304,12 +304,13 @@ function renderCart(){
   document.getElementById('itemsEmpty').style.display = cart.length ? 'none' : 'block';
   body.innerHTML = cart.map(c=>{
     const goldValue = c.netW * c.pricePerGram;
-    const total = goldValue + c.fee;
+    const feeTotal = c.fee * c.netW; // fee is entered per gram, total = rate × weight
+    const total = goldValue + feeTotal;
     return `<tr>
       <td>${c.name}<br><span style="color:var(--muted);font-size:10.5px;">${c.code} · عيار ${c.karat}</span></td>
       <td><input type="number" step="0.01" value="${c.netW}" onchange="updateCartField('${c.invId}','netW',this.value)"></td>
       <td><input type="number" step="0.01" value="${c.pricePerGram}" onchange="updateCartField('${c.invId}','pricePerGram',this.value)"></td>
-      <td><input type="number" step="0.01" value="${c.fee}" onchange="updateCartField('${c.invId}','fee',this.value)"></td>
+      <td><input type="number" step="0.01" value="${c.fee}" onchange="updateCartField('${c.invId}','fee',this.value)" title="مصنعية الجرام"> <span style="color:var(--muted);font-size:10px;">/جم</span></td>
       <td style="font-weight:700;color:var(--gold-1);">${total.toFixed(2)}</td>
       <td><button class="rm-btn" onclick="removeFromCart('${c.invId}')">✕</button></td>
     </tr>`;
@@ -325,7 +326,7 @@ function updateCartField(invId, field, value){
 function renderTotals(){
   const totWeight = cart.reduce((s,c)=>s+c.netW,0);
   const totGold = cart.reduce((s,c)=>s+(c.netW*c.pricePerGram),0);
-  const totFee = cart.reduce((s,c)=>s+c.fee,0);
+  const totFee = cart.reduce((s,c)=>s+(c.fee*c.netW),0);
   const grand = totGold + totFee;
   document.getElementById('totWeight').textContent = totWeight.toFixed(2)+' جم';
   document.getElementById('totGold').textContent = totGold.toFixed(2)+' ج.م';
