@@ -345,10 +345,7 @@ async function afterConnect(){
   if(settings.basePrice21) BASE_PRICE_21 = settings.basePrice21;
 
   document.getElementById('invoiceNo').textContent = 'رقم الفاتورة: HN-INV-' + (DATA.invoices.length + 1).toString().padStart(5,'0');
-  
-  // دالة ضبط وتاريخ النظام بشكل دقيق دون زحزحة أيام
-  const now = new Date();
-  document.getElementById('invoiceDate').textContent = now.toLocaleString('ar-EG');
+  document.getElementById('invoiceDate').textContent = new Date().toLocaleString('ar-EG');
   renderCart();
 }
 (async function boot(){ const ok = await DB.tryAutoConnect(); if(ok) afterConnect(); })();
@@ -554,11 +551,8 @@ let currentReceiptPhone = '';
 function renderReceipt(invoice, customer){
   currentReceiptPhone = customer.phone || '';
   document.getElementById('rInvNo').textContent = toArabicDigits(invoice.no.replace(/\D/g,'').padStart(7,'0'));
-  
-  // حساب وحماية دقة التواريخ المحلية لمنع أي تقديم يوم
   const d = new Date(invoice.at);
   document.getElementById('rDate').textContent = toArabicDigits(d.getDate())+' / '+toArabicDigits(d.getMonth()+1)+' / '+toArabicDigits(d.getFullYear())+'م';
-  
   document.getElementById('rCustName').textContent = customer.name;
   document.getElementById('rCustName2').textContent = customer.name;
   document.getElementById('rCustPhone').textContent = customer.phone;
@@ -613,7 +607,9 @@ async function shareReceiptWhatsapp(){
   canvas.toBlob(async (blob)=>{
     let copied = false;
 
-    // Try copying the image directly to the clipboard
+    // Try copying the image directly to the clipboard (supported on Chrome/Edge,
+    // desktop and Android). If it works, the user just presses Ctrl+V (or
+    // long-press → Paste on mobile) inside the WhatsApp chat that opens next.
     try{
       if(navigator.clipboard && window.ClipboardItem){
         await navigator.clipboard.write([ new ClipboardItem({ 'image/png': blob }) ]);
@@ -628,6 +624,9 @@ async function shareReceiptWhatsapp(){
     if(copied){
       showToast('اتفتح شات العميل، والصورة اتنسخت تلقائي — دوس Ctrl+V (أو الصق) جوه الشات وابعتها');
     } else {
+      // Fallback for browsers that block clipboard image writes (e.g. Safari, Firefox):
+      // download the image so the user can attach it manually — WhatsApp itself
+      // does not allow any website to attach a file automatically on these browsers.
       const link = document.createElement('a');
       link.download = 'فاتورة-' + document.getElementById('rInvNo').textContent.replace(/\s/g,'') + '.png';
       link.href = URL.createObjectURL(blob);
@@ -648,8 +647,7 @@ function resetInvoice(afterSave){
   renderCart();
   if(afterSave){
     document.getElementById('invoiceNo').textContent = 'رقم الفاتورة: HN-INV-' + (DATA.invoices.length + 1).toString().padStart(5,'0');
-    const now = new Date();
-    document.getElementById('invoiceDate').textContent = now.toLocaleString('ar-EG');
+    document.getElementById('invoiceDate').textContent = new Date().toLocaleString('ar-EG');
   }
 }
 </script>
