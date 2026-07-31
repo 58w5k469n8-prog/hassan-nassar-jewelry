@@ -56,6 +56,15 @@
     opacity:.5;
   }
 
+  /* ===== setup gate screen ===== */
+  .setup-gate{
+    position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
+    background:rgba(8,8,10,0.85); backdrop-filter:blur(15px); padding:20px;
+  }
+  .setup-card{
+    max-width:460px; width:100%; padding:30px; text-align:center;
+  }
+
   /* ===== layout ===== */
   .app{ position:relative; z-index:1; display:flex; min-height:100vh; }
 
@@ -221,27 +230,6 @@
   }
   .spotlight-hint{ text-align:center; color:var(--muted); font-size:11.5px; margin-top:10px; }
 
-  /* ===== CAMERA SCANNER MODAL EXTRA ===== */
-  #cameraScannerModal {
-    position: fixed; inset:0; z-index: 200; background: rgba(0,0,0,0.85);
-    backdrop-filter: blur(10px); display: none; align-items:center; justify-content:center;
-  }
-  #cameraScannerModal.show { display: flex; }
-  .scanner-card {
-    width: 90%; max-width: 480px; padding: 20px; border-radius: 24px; text-align: center;
-  }
-  .scanner-viewport {
-    width: 100%; height: 260px; background: #000; border-radius: 16px; overflow: hidden;
-    position: relative; margin: 15px 0; border: 2px solid var(--gold-1);
-  }
-  .scanner-viewport video { width: 100%; height: 100%; object-fit: cover; }
-  .scanner-laser {
-    position: absolute; top: 10%; left: 0; right: 0; height: 2px;
-    background: var(--red); box-shadow: 0 0 12px var(--red);
-    animation: scanLaser 2s infinite ease-in-out;
-  }
-  @keyframes scanLaser { 0%,100%{ top: 10%; } 50%{ top: 90%; } }
-
   @media (max-width:1000px){
     .sidebar{ display:none; }
     .kpi-grid{ grid-template-columns:repeat(2,1fr); }
@@ -250,16 +238,24 @@
   }
 </style>
 
-  <!-- مكتبات فايربيس وملف أمان الترخيص ومكتبة الباركود عبر الكاميرا -->
+  <!-- مكتبات فايربيس وملف أمان الترخيص -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-  <script src="https://unpkg.com/@zxing/library@latest"></script>
   <script src="license-guard.js"></script>
 </head>
 <body>
 <div class="ambient"></div>
 
-<div class="app">
+<!-- ===== SETUP / LICENSE GATE SCREEN ===== -->
+<div class="setup-gate" id="gateScreen">
+  <div class="setup-card glass">
+    <h1 style="font-size:18px;margin-bottom:10px;">الاتصال بقاعدة بيانات المحل</h1>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:20px;line-height:1.8;">اختر مجلد "مجوهرات حسن نصار" لعرض المخزون والعملاء وتسجيل الفاتورة والاعتماد.</p>
+    <button class="qa-btn gold" style="width:100%;padding:14px;font-weight:700;" onclick="DB.pickFolder().then(afterConnect)">📁 اختيار مجلد البيانات والاعتماد</button>
+  </div>
+</div>
+
+<div class="app" id="appScreen" style="display:none;">
 
   <!-- ===== SIDEBAR ===== -->
   <div class="sidebar glass" style="border-radius:0;">
@@ -268,19 +264,19 @@
       <div class="txt"><b>حسن نصار</b><small>الفرع الرئيسي</small></div>
     </div>
 
-    <div class="nav-item active" data-target="dashboard"><span class="ic">🏠</span> الرئيسية</div>
-    <div class="nav-item" data-target="invoice"><span class="ic">🧾</span> فاتورة بيع جديدة</div>
-    <div class="nav-item" data-target="inventory"><span class="ic">📦</span> المخزون بالعيار</div>
-    <div class="nav-item" data-target="customers"><span class="ic">👥</span> العملاء</div>
-    <div class="nav-item" data-target="suppliers"><span class="ic">🚚</span> الموردين</div>
-    <div class="nav-item" data-target="goldsmiths"><span class="ic">🔨</span> حسابات الصاغة</div>
-    <div class="nav-item" data-target="safe"><span class="ic">💰</span> الخزنة</div>
+    <div class="nav-item active"><span class="ic">🏠</span> الرئيسية</div>
+    <div class="nav-item"><span class="ic">🧾</span> فاتورة بيع جديدة</div>
+    <div class="nav-item"><span class="ic">📦</span> المخزون بالعيار</div>
+    <div class="nav-item"><span class="ic">👥</span> العملاء</div>
+    <div class="nav-item"><span class="ic">🚚</span> الموردين</div>
+    <div class="nav-item"><span class="ic">🔨</span> حسابات الصاغة</div>
+    <div class="nav-item"><span class="ic">💰</span> الخزنة</div>
 
     <div class="nav-section-label">تقارير وإعدادات</div>
-    <div class="nav-item" data-target="reports"><span class="ic">📊</span> التقارير والجرد</div>
-    <div class="nav-item" data-target="barcode"><span class="ic">🖨️</span> باركود وملصقات</div>
-    <div class="nav-item" data-target="settings"><span class="ic">⚙️</span> الإعدادات</div>
-    <div class="nav-item" data-target="about"><span class="ic">ℹ️</span> عن المطور</div>
+    <div class="nav-item"><span class="ic">📊</span> التقارير والجرد</div>
+    <div class="nav-item"><span class="ic">🖨️</span> باركود وملصقات</div>
+    <div class="nav-item"><span class="ic">⚙️</span> الإعدادات</div>
+    <div class="nav-item"><span class="ic">ℹ️</span> عن المطور</div>
   </div>
 
   <!-- ===== MAIN ===== -->
@@ -294,16 +290,13 @@
     </div>
 
     <div class="topbar">
-      <h1 id="pageTitle">الرئيسية</h1>
-      <div style="display:flex; align-items:center; gap:10px;">
-        <button class="qa-btn gold" style="padding:8px 14px; border-radius:12px;" onclick="openCameraScanner()">📷 قراءة باركود</button>
-        <div class="who glass">
-          <div>
-            <b style="font-size:12.5px;">حسن نصار</b>
-            <small>مالك المحل · متصل الآن</small>
-          </div>
-          <div class="avatar">ح ن</div>
+      <h1>الرئيسية</h1>
+      <div class="who glass">
+        <div>
+          <b style="font-size:12.5px;">حسن نصار</b>
+          <small>مالك المحل · متصل الآن</small>
         </div>
+        <div class="avatar">ح ن</div>
       </div>
     </div>
 
@@ -356,7 +349,7 @@
             <div class="karat-input-row">
               <label>سعر جرام عيار 21 (يدوي)</label>
               <input type="number" id="basePrice" value="3850" step="1">
-              <button class="qa-btn gold" style="padding:12px 16px;" onclick="fetchLivePrice()">✅ تأكيد وتحديث الشاشة</button>
+              <button class="qa-btn gold" style="padding:12px 16px;" onclick="fetchLivePrice(event)">✅ تأكيد وتحديث الشاشة</button>
             </div>
             <div class="karat-grid" id="karatGrid"></div>
           </div>
@@ -369,10 +362,10 @@
           <div class="panel glass">
             <div class="panel-head"><h2>إجراءات سريعة</h2></div>
             <div class="qa-grid">
-              <div class="qa-btn gold" onclick="navigateTo('invoice')"><span class="ic">🧾</span>فاتورة بيع</div>
-              <div class="qa-btn" onclick="navigateTo('inventory')"><span class="ic">♻️</span>شراء كسر</div>
-              <div class="qa-btn" onclick="navigateTo('inventory')"><span class="ic">📦</span>إضافة صنف</div>
-              <div class="qa-btn" onclick="navigateTo('barcode')"><span class="ic">🖨️</span>طباعة باركود</div>
+              <div class="qa-btn gold"><span class="ic">🧾</span>فاتورة بيع</div>
+              <div class="qa-btn"><span class="ic">♻️</span>شراء كسر</div>
+              <div class="qa-btn"><span class="ic">📦</span>إضافة صنف</div>
+              <div class="qa-btn"><span class="ic">🖨️</span>طباعة باركود</div>
             </div>
           </div>
 
@@ -413,48 +406,7 @@
   </div>
 </div>
 
-<!-- ===== CAMERA SCANNER MODAL ===== -->
-<div id="cameraScannerModal">
-  <div class="scanner-card glass">
-    <h2 style="font-size:16px;">كاميرا مسح الباركود</h2>
-    <p style="font-size:12px; color:var(--muted); margin-top:4px;">وجه الكاميرا نحو باركود المنتج لإضافته تلقائياً</p>
-    <div class="scanner-viewport">
-      <video id="scannerVideo"></video>
-      <div class="scanner-laser"></div>
-    </div>
-    <button class="qa-btn" style="width:100%; padding:10px;" onclick="closeCameraScanner()">إغلاق الكاميرا</button>
-  </div>
-</div>
-
 <script>
-/* ===== NAVIGATION LOGIC BETWEEN ALL PAGES ===== */
-function navigateTo(targetView){
-  document.querySelectorAll('.nav-item').forEach(el => {
-    if(el.getAttribute('data-target') === targetView){
-      el.classList.add('active');
-      const titleText = el.textContent.trim().replace(/^[\s\S]*?\s/, '');
-      const pageTitleEl = document.getElementById('pageTitle');
-      if(pageTitleEl) pageTitleEl.textContent = titleText;
-    } else {
-      el.classList.remove('active');
-    }
-  });
-
-  if(window.switchView) {
-    window.switchView(targetView);
-  } else {
-    const event = new CustomEvent('navigate', { detail: { view: targetView } });
-    window.dispatchEvent(event);
-  }
-}
-
-document.querySelectorAll('.nav-item').forEach(item => {
-  item.addEventListener('click', () => {
-    const target = item.getAttribute('data-target');
-    if(target) navigateTo(target);
-  });
-});
-
 /* ===== ticker data (duplicated once for seamless loop) ===== */
 const tickItems = [
   {k:'عيار 24', v:'٤٤٠٠ ج.م', chip:'up', chipv:'+0.6%'},
@@ -467,7 +419,6 @@ const tickItems = [
 ];
 function renderTicker(){
   const track = document.getElementById('tickerTrack');
-  if(!track) return;
   let html = '';
   for(let rep=0; rep<2; rep++){
     tickItems.forEach(it=>{
@@ -479,12 +430,27 @@ function renderTicker(){
 }
 renderTicker();
 
-/* ===== SHARED DB ENGINE ===== */
+/* =========================================================
+   SHARED DB ENGINE & LICENSE MANAGEMENT
+========================================================= */
 function idbOpen(){ return new Promise((res,rej)=>{ const r=indexedDB.open('hn_db_meta',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
 async function idbGet(k){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction('kv','readonly'); const rq=tx.objectStore('kv').get(k); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error); }); }
+async function idbSet(k,v){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction('kv','readwrite'); tx.objectStore('kv').put(v,k); tx.oncomplete=()=>res(); rq.onerror=()=>rej(rq.error); }); }
+
 const SHOP_NAME = 'مجوهرات حسن نصار';
 const DB = {
   supported:'showDirectoryPicker' in window, dirHandle:null, shopHandle:null, connected:false,
+  async pickFolder(){
+    if(!this.supported){ this.connected=true; return true; }
+    try{
+      const h = await window.showDirectoryPicker({mode:'readwrite'});
+      await idbSet('rootDirHandle', h);
+      this.dirHandle = h;
+      this.shopHandle = await h.getDirectoryHandle(SHOP_NAME, {create:true});
+      this.connected = true;
+      return true;
+    }catch(e){ return false; }
+  },
   async tryAutoConnect(){
     if(!this.supported){ this.connected=true; return true; }
     try{ const h=await idbGet('rootDirHandle'); if(!h) return false;
@@ -502,51 +468,50 @@ const DB = {
     const dbi=await idbOpen(); return new Promise((res)=>{ const tx=dbi.transaction('kv','readwrite'); tx.objectStore('kv').put(data,'fallback_'+c); tx.oncomplete=()=>res(); });
   }
 };
+
 let SETTINGS = { basePrice21: 3850 };
+
+async function afterConnect(){
+  const gate = document.getElementById('gateScreen');
+  const app = document.getElementById('appScreen');
+  if(gate) gate.style.display = 'none';
+  if(app) app.style.display = 'flex';
+  
+  SETTINGS = await DB.read('settings', SETTINGS);
+  if(SETTINGS.basePrice21){
+    document.getElementById('basePrice').value = SETTINGS.basePrice21;
+    renderKaratGrid();
+  }
+}
+
+(async function boot(){ 
+  const ok = await DB.tryAutoConnect(); 
+  if(ok) afterConnect(); 
+})();
 
 /* ===== karat price calculator ===== */
 const KARATS = [24,21,18,14,12,9];
 function renderKaratGrid(){
-  const baseInput = document.getElementById('basePrice');
-  if(!baseInput) return;
-  const base = parseFloat(baseInput.value) || 0;
+  const base = parseFloat(document.getElementById('basePrice').value) || 0;
   const grid = document.getElementById('karatGrid');
-  if(!grid) return;
   grid.innerHTML = KARATS.map(k=>{
     const price = (base * (k/21)).toFixed(2);
     return `<div class="karat-cell"><div class="kt">عيار ${k}</div><div class="kv">${price} ج.م</div></div>`;
   }).join('');
 }
-const basePriceEl = document.getElementById('basePrice');
-if(basePriceEl){
-  basePriceEl.addEventListener('input', renderKaratGrid);
-  basePriceEl.addEventListener('change', async ()=>{
-    if(!DB.connected) return;
-    SETTINGS.basePrice21 = parseFloat(basePriceEl.value) || 0;
-    await DB.write('settings', SETTINGS);
-  });
-}
+document.getElementById('basePrice').addEventListener('input', renderKaratGrid);
+document.getElementById('basePrice').addEventListener('change', async ()=>{
+  if(!DB.connected) return;
+  SETTINGS.basePrice21 = parseFloat(document.getElementById('basePrice').value) || 0;
+  await DB.write('settings', SETTINGS);
+});
 renderKaratGrid();
 
-(async function syncPriceFromSettings(){
-  const ok = await DB.tryAutoConnect();
-  if(!ok) return;
-  SETTINGS = await DB.read('settings', SETTINGS);
-  if(SETTINGS.basePrice21){
-    const el = document.getElementById('basePrice');
-    if(el){
-      el.value = SETTINGS.basePrice21;
-      renderKaratGrid();
-    }
-  }
-})();
-
-function fetchLivePrice(){
+function fetchLivePrice(e){
   renderKaratGrid();
-  const upEl = document.getElementById('lastUpdate');
-  if(upEl) upEl.textContent = 'آخر تحديث: الآن (يدوي) — ' + new Date().toLocaleTimeString('ar-EG');
-  if(window.event && window.event.target){
-    const btn = window.event.target;
+  document.getElementById('lastUpdate').textContent = 'آخر تحديث: الآن (يدوي) — ' + new Date().toLocaleTimeString('ar-EG');
+  const btn = e && e.target ? e.target : document.querySelector('.karat-input-row .qa-btn');
+  if(btn){
     btn.style.opacity = .6;
     setTimeout(()=>{ btn.style.opacity = 1; }, 300);
   }
@@ -557,80 +522,37 @@ function renderChart(){
   const data = [38,52,41,60,47,73,55];
   const max = Math.max(...data);
   const box = document.getElementById('chartBox');
-  if(!box) return;
   box.innerHTML = data.map(v=>`<div class="bar" style="height:${(v/max*100)}%"></div>`).join('');
 }
 renderChart();
 
-/* ===== spotlight command palette ===== */
+/* ===== spotlight command palette (Cmd/Ctrl+K) ===== */
 const overlay = document.getElementById('spotlightOverlay');
 const spInput = document.getElementById('spotlightInput');
 document.addEventListener('keydown', (e)=>{
   if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){
     e.preventDefault();
-    if(overlay){
-      overlay.classList.add('show');
-      if(spInput) { spInput.value = ''; setTimeout(()=>spInput.focus(), 50); }
-    }
+    overlay.classList.add('show');
+    spInput.value = '';
+    setTimeout(()=>spInput.focus(), 50);
   } else if(e.key === 'Escape'){
-    if(overlay) overlay.classList.remove('show');
-    closeCameraScanner();
+    overlay.classList.remove('show');
   }
 });
-if(overlay){
-  overlay.addEventListener('click', (e)=>{ if(e.target === overlay) overlay.classList.remove('show'); });
-}
+overlay.addEventListener('click', (e)=>{ if(e.target === overlay) overlay.classList.remove('show'); });
 
-/* ===== CAMERA BARCODE SCANNER INTEGRATION ===== */
-let codeReader = null;
-async function openCameraScanner(){
-  const modal = document.getElementById('cameraScannerModal');
-  if(!modal) return;
-  modal.classList.add('show');
-  try {
-    if(!codeReader) codeReader = new ZXing.BrowserMultiFormatReader();
-    const videoInputDevices = await codeReader.listVideoInputDevices();
-    const selectedDeviceId = videoInputDevices.length > 0 ? videoInputDevices[videoInputDevices.length - 1].deviceId : undefined;
-    
-    codeReader.decodeFromVideoDevice(selectedDeviceId, 'scannerVideo', (result, err) => {
-      if (result) {
-        handleScannedCode(result.text);
-        closeCameraScanner();
-      }
-    });
-  } catch (err) {
-    alert('عذراً، لم نتمكن من الاتصال بكاميرا الجهاز: ' + err.message);
-    closeCameraScanner();
-  }
-}
-
-function closeCameraScanner(){
-  const modal = document.getElementById('cameraScannerModal');
-  if(modal) modal.classList.remove('show');
-  if(codeReader) {
-    codeReader.reset();
-  }
-}
-
-function handleScannedCode(code){
-  if(window.onBarcodeScanned) {
-    window.onBarcodeScanned(code);
-  } else {
-    alert('تم قراءة الباركود بنجاح: ' + code);
-  }
-}
-
-/* ===== BARCODE SCANNER LISTENER (HARDWARE WEDGE) ===== */
+/* ===== barcode scanner listener ===== */
 let scanBuffer = '';
 let lastKeyTime = 0;
 document.addEventListener('keydown', (e)=>{
-  if(document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
+  if(document.activeElement.tagName === 'INPUT') return;
   const now = Date.now();
   if(now - lastKeyTime > 60) scanBuffer = '';
   lastKeyTime = now;
   if(e.key === 'Enter'){
     if(scanBuffer.length >= 4){
-      handleScannedCode(scanBuffer);
+      console.log('Barcode scanned:', scanBuffer);
+      alert('تم مسح الباركود: ' + scanBuffer + '\n(سيتم فتح بيانات القطعة تلقائياً في وحدة المخزون/الفاتورة)');
     }
     scanBuffer = '';
   } else if(e.key.length === 1){
