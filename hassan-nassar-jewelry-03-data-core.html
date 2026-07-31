@@ -92,6 +92,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="license-guard.js"></script>
+  <!-- Google Drive backup -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="google-drive-config.js"></script>
 </head>
 <body>
 <div class="ambient"></div>
@@ -118,10 +121,17 @@
       <div class="dot ok" id="dbDot"></div>
       <span id="dbStatusText">متصل بفولدر: —</span>
     </div>
-    <div style="display:flex;gap:8px;">
-      <button class="btn btn-ghost btn-sm" onclick="exportBackup()">⬇️ نسخة احتياطية</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <button class="btn btn-ghost btn-sm" onclick="exportBackup()">⬇️ نسخة احتياطية يدوية</button>
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('restoreInput').click()">⬆️ استعادة</button>
       <input type="file" id="restoreInput" accept="application/json" style="display:none;" onchange="importBackup(event)">
+      <span style="width:1px;height:20px;background:rgba(255,255,255,0.1);"></span>
+      <span id="gdriveStatus" style="font-size:11.5px;color:var(--muted);">Google Drive: غير متصل</span>
+      <button class="btn btn-ghost btn-sm" id="gdriveConnectBtn" onclick="connectGoogleDrive()">🔗 ربط Google Drive</button>
+      <button class="btn btn-ghost btn-sm" id="gdriveBackupBtn" style="display:none;" onclick="backupToGoogleDrive()">☁️ نسخ الآن على Drive</button>
+      <label style="display:none;align-items:center;gap:4px;font-size:11px;color:var(--muted);" id="gdriveAutoWrap">
+        <input type="checkbox" id="gdriveAutoToggle" style="width:auto;" onchange="toggleGdriveAuto()"> نسخ تلقائي يومي
+      </label>
     </div>
   </div>
 
@@ -642,6 +652,87 @@ function renderGoldsmiths(){
 /* =========================================================
    BACKUP / RESTORE
 ========================================================= */
+/* =========================================================
+   GOOGLE DRIVE BACKUP
+   ---------------------------------------------------------
+   Honest note on "automatic" backup: browsers cannot run code while
+   closed, and Google's sign-in requires a real user click at least
+   once per browser session for privacy reasons. What this DOES do:
+   - One click connects the shop owner's Google account (kept signed
+     in for that browser going forward).
+   - Every time the program is OPENED, if "auto daily" is on and more
+     than 24h passed since the last backup, it silently backs up in
+     the background — no clicks needed, as long as the browser was
+     opened that day.
+   - It is not a background service running while the computer is off.
+========================================================= */
+let gAccessToken = null;
+let gTokenClient = null;
+
+window.addEventListener('load', ()=>{
+  if(typeof google === 'undefined' || !google.accounts) return; // script blocked/offline — Drive features simply stay unavailable
+  gTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    callback: (resp)=>{
+      if(resp.error) return;
+      gAccessToken = resp.access_token;
+      onGdriveConnected();
+    }
+  });
+  // If previously connected in this browser, try a silent (no popup) token refresh.
+  if(localStorage.getItem('gdrive_connected') === '1'){
+    gTokenClient.requestAccessToken({ prompt: '' });
+  }
+});
+
+function connectGoogleDrive(){
+  if(!gTokenClient){ showToast('مكتبة Google لسه بتحمّل، حاول تاني بعد ثانية'); return; }
+  gTokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+function onGdriveConnected(){
+  localStorage.setItem('gdrive_connected','1');
+  document.getElementById('gdriveStatus').textContent = 'Google Drive: متصل ✅';
+  document.getElementById('gdriveConnectBtn').style.display = 'none';
+  document.getElementById('gdriveBackupBtn').style.display = 'inline-block';
+  document.getElementById('gdriveAutoWrap').style.display = 'inline-flex';
+  document.getElementById('gdriveAutoToggle').checked = localStorage.getItem('gdrive_auto') === '1';
+  maybeRunAutoBackup();
+}
+
+function toggleGdriveAuto(){
+  localStorage.setItem('gdrive_auto', document.getElementById('gdriveAutoToggle').checked ? '1' : '0');
+}
+
+async function backupToGoogleDrive(){
+  if(!gAccessToken){ showToast('اربط حساب Google Drive أولاً'); return; }
+  const metadata = { name: 'hn-jewelry-backup-'+new Date().toISOString().slice(0,10)+'.json', mimeType:'application/json' };
+  const boundary = 'hnboundary' + Date.now();
+  const body =
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+    `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(DATA)}\r\n--${boundary}--`;
+  try{
+    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      method:'POST',
+      headers:{ 'Authorization':'Bearer '+gAccessToken, 'Content-Type':'multipart/related; boundary='+boundary },
+      body
+    });
+    if(res.ok){
+      localStorage.setItem('gdrive_last_backup', Date.now());
+      showToast('تم رفع نسخة احتياطية على Google Drive بنجاح ☁️');
+    } else {
+      showToast('فشل الرفع على Drive — حاول تربط الحساب تاني');
+    }
+  }catch(e){ showToast('لا يوجد اتصال بالإنترنت الآن — حاول لاحقاً'); }
+}
+
+function maybeRunAutoBackup(){
+  if(localStorage.getItem('gdrive_auto') !== '1') return;
+  const last = parseInt(localStorage.getItem('gdrive_last_backup') || '0', 10);
+  if(Date.now() - last > 24*60*60*1000) backupToGoogleDrive();
+}
+
 function exportBackup(){
   const blob = new Blob([JSON.stringify(DATA, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
