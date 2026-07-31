@@ -56,15 +56,6 @@
     opacity:.5;
   }
 
-  /* ===== setup gate screen ===== */
-  .setup-gate{
-    position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
-    background:rgba(8,8,10,0.85); backdrop-filter:blur(15px); padding:20px;
-  }
-  .setup-card{
-    max-width:460px; width:100%; padding:30px; text-align:center;
-  }
-
   /* ===== layout ===== */
   .app{ position:relative; z-index:1; display:flex; min-height:100vh; }
 
@@ -246,16 +237,7 @@
 <body>
 <div class="ambient"></div>
 
-<!-- ===== SETUP / LICENSE GATE SCREEN ===== -->
-<div class="setup-gate" id="gateScreen">
-  <div class="setup-card glass">
-    <h1 style="font-size:18px;margin-bottom:10px;">الاتصال بقاعدة بيانات المحل</h1>
-    <p style="color:var(--muted);font-size:13px;margin-bottom:20px;line-height:1.8;">اختر مجلد "مجوهرات حسن نصار" لعرض المخزون والعملاء وتسجيل الفاتورة والاعتماد.</p>
-    <button class="qa-btn gold" style="width:100%;padding:14px;font-weight:700;" onclick="DB.pickFolder().then(afterConnect)">📁 اختيار مجلد البيانات والاعتماد</button>
-  </div>
-</div>
-
-<div class="app" id="appScreen" style="display:none;">
+<div class="app">
 
   <!-- ===== SIDEBAR ===== -->
   <div class="sidebar glass" style="border-radius:0;">
@@ -349,7 +331,7 @@
             <div class="karat-input-row">
               <label>سعر جرام عيار 21 (يدوي)</label>
               <input type="number" id="basePrice" value="3850" step="1">
-              <button class="qa-btn gold" style="padding:12px 16px;" onclick="fetchLivePrice(event)">✅ تأكيد وتحديث الشاشة</button>
+              <button class="qa-btn gold" style="padding:12px 16px;" onclick="fetchLivePrice()">✅ تأكيد وتحديث الشاشة</button>
             </div>
             <div class="karat-grid" id="karatGrid"></div>
           </div>
@@ -430,27 +412,23 @@ function renderTicker(){
 }
 renderTicker();
 
+/* ===== karat price calculator =====
+   Formula (as specified):
+   price18 = price21 * (18/21)
+   price24 = price21 * (24/21)
+   Generalized for any karat: priceK = price21 * (K/21)
+*/
 /* =========================================================
-   SHARED DB ENGINE & LICENSE MANAGEMENT
+   SHARED DB ENGINE (same pattern as the other modules) — connects
+   silently in the background so this screen keeps working even if
+   no folder has been picked yet; the price simply won't sync until
+   a connection succeeds.
 ========================================================= */
 function idbOpen(){ return new Promise((res,rej)=>{ const r=indexedDB.open('hn_db_meta',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
 async function idbGet(k){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction('kv','readonly'); const rq=tx.objectStore('kv').get(k); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error); }); }
-async function idbSet(k,v){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction('kv','readwrite'); tx.objectStore('kv').put(v,k); tx.oncomplete=()=>res(); rq.onerror=()=>rej(rq.error); }); }
-
 const SHOP_NAME = 'مجوهرات حسن نصار';
 const DB = {
   supported:'showDirectoryPicker' in window, dirHandle:null, shopHandle:null, connected:false,
-  async pickFolder(){
-    if(!this.supported){ this.connected=true; return true; }
-    try{
-      const h = await window.showDirectoryPicker({mode:'readwrite'});
-      await idbSet('rootDirHandle', h);
-      this.dirHandle = h;
-      this.shopHandle = await h.getDirectoryHandle(SHOP_NAME, {create:true});
-      this.connected = true;
-      return true;
-    }catch(e){ return false; }
-  },
   async tryAutoConnect(){
     if(!this.supported){ this.connected=true; return true; }
     try{ const h=await idbGet('rootDirHandle'); if(!h) return false;
@@ -468,28 +446,14 @@ const DB = {
     const dbi=await idbOpen(); return new Promise((res)=>{ const tx=dbi.transaction('kv','readwrite'); tx.objectStore('kv').put(data,'fallback_'+c); tx.oncomplete=()=>res(); });
   }
 };
-
 let SETTINGS = { basePrice21: 3850 };
 
-async function afterConnect(){
-  const gate = document.getElementById('gateScreen');
-  const app = document.getElementById('appScreen');
-  if(gate) gate.style.display = 'none';
-  if(app) app.style.display = 'flex';
-  
-  SETTINGS = await DB.read('settings', SETTINGS);
-  if(SETTINGS.basePrice21){
-    document.getElementById('basePrice').value = SETTINGS.basePrice21;
-    renderKaratGrid();
-  }
-}
-
-(async function boot(){ 
-  const ok = await DB.tryAutoConnect(); 
-  if(ok) afterConnect(); 
-})();
-
-/* ===== karat price calculator ===== */
+/* ===== karat price calculator =====
+   Formula (as specified):
+   price18 = price21 * (18/21)
+   price24 = price21 * (24/21)
+   Generalized for any karat: priceK = price21 * (K/21)
+*/
 const KARATS = [24,21,18,14,12,9];
 function renderKaratGrid(){
   const base = parseFloat(document.getElementById('basePrice').value) || 0;
@@ -501,20 +465,33 @@ function renderKaratGrid(){
 }
 document.getElementById('basePrice').addEventListener('input', renderKaratGrid);
 document.getElementById('basePrice').addEventListener('change', async ()=>{
+  // Persist to settings.json so the invoice, reports, and every other
+  // module read this exact same manually-entered price — never a separate number.
   if(!DB.connected) return;
   SETTINGS.basePrice21 = parseFloat(document.getElementById('basePrice').value) || 0;
   await DB.write('settings', SETTINGS);
 });
 renderKaratGrid();
 
-function fetchLivePrice(e){
+(async function syncPriceFromSettings(){
+  const ok = await DB.tryAutoConnect();
+  if(!ok) return; // no folder connected yet on this browser — keep local default
+  SETTINGS = await DB.read('settings', SETTINGS);
+  if(SETTINGS.basePrice21){
+    document.getElementById('basePrice').value = SETTINGS.basePrice21;
+    renderKaratGrid();
+  }
+})();
+
+function fetchLivePrice(){
+  // Manual entry is the primary, fully-working flow — the karat grid
+  // already updates live as you type in the price field above.
+  // This button is just a confirmation until a live API provider is connected.
   renderKaratGrid();
   document.getElementById('lastUpdate').textContent = 'آخر تحديث: الآن (يدوي) — ' + new Date().toLocaleTimeString('ar-EG');
-  const btn = e && e.target ? e.target : document.querySelector('.karat-input-row .qa-btn');
-  if(btn){
-    btn.style.opacity = .6;
-    setTimeout(()=>{ btn.style.opacity = 1; }, 300);
-  }
+  const btn = event.target;
+  btn.style.opacity = .6;
+  setTimeout(()=>{ btn.style.opacity = 1; }, 300);
 }
 
 /* ===== fake weekly chart ===== */
@@ -541,13 +518,17 @@ document.addEventListener('keydown', (e)=>{
 });
 overlay.addEventListener('click', (e)=>{ if(e.target === overlay) overlay.classList.remove('show'); });
 
-/* ===== barcode scanner listener ===== */
+/* ===== barcode scanner listener (keyboard-wedge style) =====
+   Most USB barcode scanners type digits very fast then send Enter.
+   This listens globally, buffers fast keystrokes, and on Enter
+   treats the buffer as a scanned code (only when not typing in a field).
+*/
 let scanBuffer = '';
 let lastKeyTime = 0;
 document.addEventListener('keydown', (e)=>{
-  if(document.activeElement.tagName === 'INPUT') return;
+  if(document.activeElement.tagName === 'INPUT') return; // don't hijack normal typing
   const now = Date.now();
-  if(now - lastKeyTime > 60) scanBuffer = '';
+  if(now - lastKeyTime > 60) scanBuffer = ''; // reset if typing is too slow to be a scanner
   lastKeyTime = now;
   if(e.key === 'Enter'){
     if(scanBuffer.length >= 4){
