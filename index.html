@@ -140,6 +140,18 @@ const DB = {
   },
   async pickFolder(){
     if(!this.supported){ this.connected=true; return; }
+    try{
+      const saved = await idbGet('rootDirHandle');
+      if(saved){
+        const perm = await saved.requestPermission({mode:'readwrite'});
+        if(perm === 'granted'){
+          this.dirHandle=saved;
+          this.shopHandle=await this.dirHandle.getDirectoryHandle(SHOP_NAME,{create:true});
+          this.connected=true;
+          return;
+        }
+      }
+    }catch(e){ /* تجاهل وكمّل لاختيار مجلد جديد */ }
     this.dirHandle=await window.showDirectoryPicker({mode:'readwrite'});
     await idbSet('rootDirHandle', this.dirHandle);
     this.shopHandle=await this.dirHandle.getDirectoryHandle(SHOP_NAME,{create:true});
@@ -191,4 +203,3 @@ function skipGate(){
 </script>
 </body>
 </html>
- 
