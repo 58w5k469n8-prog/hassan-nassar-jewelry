@@ -650,29 +650,15 @@ function renderGoldsmiths(){
 }
 
 /* =========================================================
-   BACKUP / RESTORE
-========================================================= */
-/* =========================================================
-   GOOGLE DRIVE BACKUP
-   ---------------------------------------------------------
-   Honest note on "automatic" backup: browsers cannot run code while
-   closed, and Google's sign-in requires a real user click at least
-   once per browser session for privacy reasons. What this DOES do:
-   - One click connects the shop owner's Google account (kept signed
-     in for that browser going forward).
-   - Every time the program is OPENED, if "auto daily" is on and more
-     than 24h passed since the last backup, it silently backs up in
-     the background — no clicks needed, as long as the browser was
-     opened that day.
-   - It is not a background service running while the computer is off.
+   BACKUP / RESTORE & GOOGLE DRIVE INTEGRATION
 ========================================================= */
 let gAccessToken = null;
 let gTokenClient = null;
 
 window.addEventListener('load', ()=>{
-  if(typeof google === 'undefined' || !google.accounts) return; // script blocked/offline — Drive features simply stay unavailable
+  if(typeof google === 'undefined' || !google.accounts) return;
   gTokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: GOOGLE_CLIENT_ID,
+    client_id: typeof GOOGLE_CLIENT_ID !== 'undefined' ? GOOGLE_CLIENT_ID : '',
     scope: 'https://www.googleapis.com/auth/drive.file',
     callback: (resp)=>{
       if(resp.error) return;
@@ -680,7 +666,6 @@ window.addEventListener('load', ()=>{
       onGdriveConnected();
     }
   });
-  // If previously connected in this browser, try a silent (no popup) token refresh.
   if(localStorage.getItem('gdrive_connected') === '1'){
     gTokenClient.requestAccessToken({ prompt: '' });
   }
@@ -742,6 +727,7 @@ function exportBackup(){
   URL.revokeObjectURL(url);
   showToast('تم تنزيل نسخة احتياطية كاملة');
 }
+
 async function importBackup(e){
   const file = e.target.files[0];
   if(!file) return;
