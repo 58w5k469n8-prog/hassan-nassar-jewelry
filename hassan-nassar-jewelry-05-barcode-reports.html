@@ -67,6 +67,17 @@
     #printArea, #printArea *{ visibility:visible; }
     #printArea{ position:absolute; top:0; right:0; left:0; }
   }
+  /* printer profile layouts */
+  body.pp-a4 #printArea{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  body.pp-jewelry #printArea{ display:grid; grid-template-columns:repeat(5,1fr); gap:4px; }
+  body.pp-jewelry .label{ padding:4px; }
+  body.pp-jewelry .label svg{ height:26px; }
+  body.pp-jewelry .label .serial{ font-size:7px; }
+  body.pp-jewelry .label .shop{ font-size:7px; }
+  body.pp-thermal80 #printArea, body.pp-thermal58 #printArea{ display:block; width:100%; }
+  body.pp-thermal80 .label, body.pp-thermal58 .label{ width:100%; border-radius:0; border-bottom:1px dashed #999; margin-bottom:6px; padding:6px 0; }
+  body.pp-thermal58 #printArea{ max-width:54mm; margin:0 auto; }
+  body.pp-thermal80 #printArea{ max-width:76mm; margin:0 auto; }
   @media (max-width:900px){ .grid2{ grid-template-columns:1fr; } .filters{ grid-template-columns:1fr 1fr; } .kpi-row{ grid-template-columns:1fr 1fr; } .label-sheet{ grid-template-columns:1fr 1fr; } }
 </style>
 
@@ -108,10 +119,17 @@
         <div id="reprintResults" style="max-height:160px;overflow-y:auto;"></div>
       </div>
       <div class="card glass">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
           <h2 style="margin:0;">معاينة الملصقات</h2>
-          <button class="btn btn-ghost" style="width:auto;" onclick="window.print()">🖨️ طباعة</button>
+          <button class="btn btn-ghost" style="width:auto;" onclick="printWithProfile()">🖨️ طباعة</button>
         </div>
+        <label>نوع الطابعة</label>
+        <select id="printerProfile" style="margin-bottom:14px;" onchange="applyPrinterProfile()">
+          <option value="a4">ورق A4 عادي (عدة ملصقات في الصفحة)</option>
+          <option value="jewelry">ملصقات ذهب صغيرة (Jewelry Tags)</option>
+          <option value="thermal80">طابعة كاشير حرارية 80mm</option>
+          <option value="thermal58">طابعة إيصالات حرارية 58mm</option>
+        </select>
         <div class="label-sheet" id="printArea"></div>
         <div class="empty" id="labelEmpty">ولّد ملصقات جديدة أو اختر صنف لإعادة الطباعة</div>
       </div>
@@ -194,12 +212,15 @@ function showToast(msg){ const t=document.getElementById('toast'); t.textContent
 
 let DATA = { inventory:[], suppliers:[], barcodeCounter:0 };
 
+let BASE_PRICE_21 = 3850;
 async function afterConnect(){
   document.getElementById('gateScreen').style.display='none';
   document.getElementById('appScreen').style.display='block';
   DATA.inventory = await DB.read('inventory', []);
   DATA.suppliers = await DB.read('suppliers', []);
-  DATA.barcodeCounter = (await DB.read('settings', {})).barcodeCounter || DATA.inventory.length;
+  const settings = await DB.read('settings', {});
+  DATA.barcodeCounter = settings.barcodeCounter || DATA.inventory.length;
+  if(settings.basePrice21) BASE_PRICE_21 = settings.basePrice21;
   document.getElementById('fltSupplier').innerHTML = '<option value="">الكل</option>' + DATA.suppliers.map(s=>`<option value="${s.id}">${s.company}</option>`).join('');
 }
 (async function boot(){ const ok = await DB.tryAutoConnect(); if(ok) afterConnect(); })();
@@ -212,6 +233,23 @@ document.querySelectorAll('.tab').forEach(t=>{
     t.classList.add('active'); document.getElementById('panel-'+t.dataset.tab).classList.add('active');
   });
 });
+
+/* ===== PRINTER PROFILES ===== */
+function applyPrinterProfile(){
+  const profile = document.getElementById('printerProfile').value;
+  document.body.className = document.body.className.replace(/\bpp-\S+/g, '').trim();
+  document.body.classList.add('pp-' + profile);
+
+  let styleTag = document.getElementById('dynamicPageSize');
+  if(!styleTag){ styleTag = document.createElement('style'); styleTag.id='dynamicPageSize'; document.head.appendChild(styleTag); }
+  const pageSizes = { a4:'A4', jewelry:'A4', thermal80:'80mm auto', thermal58:'58mm auto' };
+  styleTag.textContent = `@media print{ @page{ size:${pageSizes[profile]}; margin:3mm; } }`;
+}
+function printWithProfile(){
+  applyPrinterProfile();
+  window.print();
+}
+applyPrinterProfile();
 
 /* ===== BARCODE GENERATION =====
    Sequential unique codes: HN000000001, HN000000002, ...
@@ -272,7 +310,7 @@ function runReport(){
 
   lastReportRows = rows;
   const totalWeight = rows.reduce((s,i)=>s+i.netW,0);
-  const totalValue = rows.reduce((s,i)=>s + (i.netW*3850*(i.karat/21)) + (i.feeRetail*i.netW), 0); // uses manual base price of 21 = 3850 (synced from settings in full build)
+  const totalValue = rows.reduce((s,i)=>s + (i.netW*BASE_PRICE_21*(i.karat/21)) + (i.feeRetail*i.netW), 0);
   const availCount = rows.filter(i=>i.status==='available').length;
 
   document.getElementById('kpiCount').textContent = rows.length;
@@ -283,7 +321,7 @@ function runReport(){
   document.getElementById('reportEmpty').style.display = rows.length ? 'none' : 'block';
   document.getElementById('reportBody').innerHTML = rows.map(i=>{
     const sup = DATA.suppliers.find(s=>s.id===i.supplierId);
-    const val = (i.netW*3850*(i.karat/21)) + (i.feeRetail*i.netW);
+    const val = (i.netW*BASE_PRICE_21*(i.karat/21)) + (i.feeRetail*i.netW);
     return `<tr>
       <td style="font-family:ui-monospace,Menlo,monospace;">${i.code}</td>
       <td>${i.name}</td><td>${i.karat}</td><td>${i.netW.toFixed(2)} جم</td>
