@@ -602,21 +602,37 @@ function normalizeEgyptPhone(phone){
 async function shareReceiptWhatsapp(){
   if(!currentReceiptPhone){ showToast('لا يوجد رقم هاتف مسجل لهذا العميل'); return; }
   const el = document.getElementById('receiptPrint');
-  const canvas = await html2canvas(el, {scale:2, backgroundColor:'#ffffff'});
-  canvas.toBlob((blob)=>{
-    // Download the invoice image — WhatsApp links (wa.me) cannot auto-attach a
-    // file on ANY platform (mobile or desktop); this is a WhatsApp limitation.
-    const link = document.createElement('a');
-    link.download = 'فاتورة-' + document.getElementById('rInvNo').textContent.replace(/\s/g,'') + '.png';
-    link.href = URL.createObjectURL(blob);
-    link.click();
+  const canvas = await html2canvas(el, {scale:3, backgroundColor:'#ffffff'}); // scale 3 = higher quality image
 
-    // Open the customer's own WhatsApp chat directly (not a generic share sheet).
+  canvas.toBlob(async (blob)=>{
+    let copied = false;
+
+    // Try copying the image directly to the clipboard (supported on Chrome/Edge,
+    // desktop and Android). If it works, the user just presses Ctrl+V (or
+    // long-press → Paste on mobile) inside the WhatsApp chat that opens next.
+    try{
+      if(navigator.clipboard && window.ClipboardItem){
+        await navigator.clipboard.write([ new ClipboardItem({ 'image/png': blob }) ]);
+        copied = true;
+      }
+    }catch(e){ copied = false; }
+
+    // Always open the customer's own WhatsApp chat directly.
     const waNumber = normalizeEgyptPhone(currentReceiptPhone);
-    const msg = encodeURIComponent('فاتورتك من مجوهرات حسن نصار مرفقة كصورة 🧾');
-    window.open(`https://wa.me/${waNumber}?text=${msg}`, '_blank');
+    window.open(`https://wa.me/${waNumber}`, '_blank');
 
-    showToast('اتفتحت شات العميل على واتساب — أرفق الصورة اللي اتنزلت دلوقتي في المحادثة');
+    if(copied){
+      showToast('اتفتح شات العميل، والصورة اتنسخت تلقائي — دوس Ctrl+V (أو الصق) جوه الشات وابعتها');
+    } else {
+      // Fallback for browsers that block clipboard image writes (e.g. Safari, Firefox):
+      // download the image so the user can attach it manually — WhatsApp itself
+      // does not allow any website to attach a file automatically on these browsers.
+      const link = document.createElement('a');
+      link.download = 'فاتورة-' + document.getElementById('rInvNo').textContent.replace(/\s/g,'') + '.png';
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      showToast('اتفتح شات العميل — متصفحك لا يدعم النسخ التلقائي، فتم تنزيل الصورة لإرفاقها يدوياً');
+    }
   }, 'image/png');
 }
 
