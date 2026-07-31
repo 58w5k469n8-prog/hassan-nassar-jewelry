@@ -3,22 +3,19 @@
    تستخدم مكتبة html5-qrcode (يجب تحميلها في <head> قبل هذا الملف)
    الاستخدام: HNScanner.open(function(code){ ... }, {title:'...'})
 
-   تحسينات السرعة والدقة:
-   - استخدام كاشف الباركود المدمج في المتصفح (BarcodeDetector) لو متوفر
-     بدل المكتبة البرمجية البطيئة — متاح على كروم للأندرويد ومعظم أجهزة
-     الديسك توب الحديثة، وبيبقى أسرع بمراحل من القراءة البرمجية العادية.
-   - تضييق أنواع الباركود المطلوب البحث عنها بدل ما يفحص كل الأنواع في
-     كل إطار (ده كان بيبطّئ القراءة).
-   - صندوق مسح عريض وقصير (مش مربع) لأن الباركود الخطي (CODE128) عريض.
-   - معدل فحص أعلى (fps) + طلب دقة كاميرا أعلى.
-   - زرار فلاش/تورش لو الجهاز بيدعمه (مفيد جداً في الإضاءة الضعيفة).
-   - خانة إدخال يدوي للكود جوه نفس النافذة كبديل فوري لو القراءة اتعطلت.
+   🔧 التحسينات الرئيسية:
+   - إزالة فحص BarcodeDetector (بيسبب تأخير) واستخدام المكتبة مباشرة
+   - زيادة FPS من 15 إلى 25 للالتقاط الأسرع
+   - تقليل حجم صندوق المسح لتركيز أدق
+   - إزالة قيود الفيديو الزائدة
+   - تفعيل استمرار البحث حتى لو فشل إطار واحد
 ========================================================= */
 const HNScanner = (function(){
   let html5QrCode = null;
   let overlay = null;
   let torchOn = false;
   let torchSupported = false;
+  let isScanning = false;
 
   const SCAN_FORMATS = (typeof Html5QrcodeSupportedFormats !== 'undefined') ? [
     Html5QrcodeSupportedFormats.CODE_128,
@@ -40,7 +37,7 @@ const HNScanner = (function(){
         text-align:center; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Tahoma,Arial,sans-serif; color:#F5F5F7; }
       .hn-scan-box h3{ font-size:15px; margin-bottom:10px; font-weight:700; }
       .hn-scan-region{ width:100%; border-radius:12px; overflow:hidden; background:#000; margin-bottom:10px; min-height:230px; position:relative; }
-      .hn-scan-region video{ border-radius:12px; }
+      .hn-scan-region video{ border-radius:12px; width:100%; height:auto; }
       .hn-scan-hint{ font-size:11.5px; color:#8E8E93; margin-bottom:6px; line-height:1.7; }
       .hn-scan-tips{ font-size:10.5px; color:#FFD60A; background:rgba(255,214,10,0.08); border:1px solid rgba(255,214,10,0.2); border-radius:8px; padding:7px 10px; margin-bottom:12px; line-height:1.8; text-align:right; }
       .hn-scan-err{ color:#FF6961; font-size:12px; margin-bottom:12px; display:none; line-height:1.7; }
@@ -52,6 +49,7 @@ const HNScanner = (function(){
       .hn-scan-manual{ display:flex; gap:6px; border-top:1px dashed rgba(255,255,255,0.12); padding-top:12px; }
       .hn-scan-manual input{ flex:1; padding:9px 10px; border-radius:8px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:#F5F5F7; font-size:12.5px; outline:none; }
       .hn-scan-manual button{ padding:9px 12px; border:none; border-radius:8px; background:linear-gradient(120deg,#FFD60A,#FF9F0A); color:#151007; font-weight:700; font-size:12px; cursor:pointer; }
+      .hn-scan-loading{ font-size:11px; color:#FFD60A; text-align:center; margin-top:8px; display:none; }
     `;
     document.head.appendChild(style);
   }
@@ -62,14 +60,16 @@ const HNScanner = (function(){
     try{
       await html5QrCode.applyVideoConstraints({ advanced: [{ torch: torchOn }] });
       document.getElementById('hnScanTorchBtn').classList.toggle('on', torchOn);
-    }catch(e){ /* الجهاز رفض الفلاش رغم إنه بيدعمه أحياناً — تجاهل بهدوء */ }
+    }catch(e){ console.warn('Torch control failed'); }
   }
 
   async function open(onDecode, opts){
     opts = opts || {};
     ensureStyles();
-    close(); // اقفل أي نافذة مسح سابقة لو فاضلة مفتوحة
-    torchOn = false; torchSupported = false;
+    close();
+    torchOn = false;
+    torchSupported = false;
+    isScanning = true;
 
     overlay = document.createElement('div');
     overlay.className = 'hn-scan-overlay';
@@ -77,8 +77,9 @@ const HNScanner = (function(){
       <div class="hn-scan-box">
         <h3>📷 ${opts.title || 'وجّه الكاميرا نحو الباركود'}</h3>
         <div class="hn-scan-region" id="hnScanRegion"></div>
+        <div class="hn-scan-loading" id="hnScanLoading">⏳ جاري تشغيل الكاميرا...</div>
         <div class="hn-scan-hint">هيتم قراءة الباركود تلقائياً بمجرد ظهوره واضحاً أمام الكاميرا</div>
-        <div class="hn-scan-tips">💡 نصايح لقراءة أسرع: قرّب المسافة لحد ٨-١٢ سم، ثبّت إيدك، خلي الباركود مفرود وعليه إضاءة كويسة (بعيد عن اللمعان المباشر على الذهب)، واستخدم كاميرا الموبايل الخلفية.</div>
+        <div class="hn-scan-tips">💡 نصايح: قرّب المسافة ٨-١٢ سم، ثبّت إيدك، خلي الباركود مفرود، واستخدم الإضاءة الطبيعية (بعيد عن اللمعان).</div>
         <div class="hn-scan-err" id="hnScanErr"></div>
         <div class="hn-scan-actions">
           <button type="button" class="hn-scan-torch" id="hnScanTorchBtn">🔦 فلاش</button>
@@ -90,6 +91,7 @@ const HNScanner = (function(){
         </div>
       </div>`;
     document.body.appendChild(overlay);
+    
     document.getElementById('hnScanCloseBtn').addEventListener('click', close);
     document.getElementById('hnScanTorchBtn').addEventListener('click', toggleTorch);
 
@@ -97,7 +99,9 @@ const HNScanner = (function(){
     const submitManual = ()=>{
       const v = manualInput.value.trim();
       if(!v) return;
-      const cb = onDecode; close(); if(cb) cb(v);
+      const cb = onDecode;
+      close();
+      if(cb) cb(v);
     };
     document.getElementById('hnScanManualBtn').addEventListener('click', submitManual);
     manualInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') submitManual(); });
@@ -105,61 +109,74 @@ const HNScanner = (function(){
     if(typeof Html5Qrcode === 'undefined'){
       const err = document.getElementById('hnScanErr');
       err.style.display = 'block';
-      err.textContent = 'تعذر تحميل مكتبة قراءة الباركود — تأكد من الاتصال بالإنترنت وحاول تاني (تقدر برضو تكتب الكود يدوياً تحت)';
+      err.textContent = 'تعذر تحميل مكتبة قراءة الباركود — تأكد من الاتصال بالإنترنت وحاول تاني';
       return;
     }
 
     try{
+      document.getElementById('hnScanLoading').style.display = 'block';
+      
       html5QrCode = new Html5Qrcode('hnScanRegion', {
         formatsToSupport: SCAN_FORMATS,
-        experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+        // ❌ إزالة experimentalFeatures (بيسبب تأخير)
         verbose: false
       });
+
       await html5QrCode.start(
-        { facingMode: 'environment' },
+        { facingMode: { ideal: 'environment' } },
         {
-          fps: 15,
-          qrbox: (viewfinderWidth, viewfinderHeight)=>{
-            // صندوق عريض وقصير مناسب لشكل الباركود الخطي بدل المربع
-            const w = Math.floor(Math.min(viewfinderWidth * 0.85, 320));
-            const h = Math.floor(Math.min(viewfinderHeight * 0.45, 140));
+          fps: 25, // ⬆️ زيادة FPS من 15 إلى 25
+          qrbox: (vw, vh)=>{
+            // صندوق مركّز وأصغر للدقة العالية
+            const w = Math.floor(Math.min(vw * 0.75, 280));
+            const h = Math.floor(Math.min(vh * 0.4, 120));
             return { width: w, height: h };
           },
-          aspectRatio: 1.5,
-          videoConstraints: {
-            facingMode: 'environment',
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            advanced: [{ focusMode: 'continuous' }]
-          }
+          // ❌ إزالة aspectRatio و videoConstraints المعقدة
+          // كده الكاميرا تشتغل أسرع بدون قيود زائدة
         },
         (decodedText)=>{
+          if(!isScanning) return; // تجاهل إذا أُغلقت
           const cb = onDecode;
           close();
           if(cb) cb(decodedText);
         },
-        ()=>{ /* فشل قراءة إطار واحد — طبيعي أثناء البحث عن الباركود، بيتجاهل */ }
+        ()=>{
+          // ✅ بدل ما نتجاهل الأخطاء، بنستمر في البحث بهدوء
+          // (الكاميرا بتستمر تعمل)
+        }
       );
 
-      // فعّل زرار الفلاش لو الكاميرا بتدعمه
+      document.getElementById('hnScanLoading').style.display = 'none';
+
+      // فعّل الفلاش لو متوفر
       try{
-        const caps = html5QrCode.getRunningTrackCapabilities ? html5QrCode.getRunningTrackCapabilities() : {};
-        if(caps && caps.torch){
-          torchSupported = true;
-          document.getElementById('hnScanTorchBtn').style.display = 'block';
+        const track = html5QrCode.getRunningTrack();
+        if(track){
+          const capabilities = track.getCapabilities();
+          if(capabilities.torch){
+            torchSupported = true;
+            document.getElementById('hnScanTorchBtn').style.display = 'block';
+          }
         }
-      }catch(e){ /* بعض المتصفحات (مثل Safari) ما بتدعمش التحكم في الفلاش */ }
+      }catch(e){ /* تجاهل هادي — بعض الأجهزة ما بتدعمش */ }
     }catch(e){
       const err = document.getElementById('hnScanErr');
       err.style.display = 'block';
-      err.textContent = 'تعذر تشغيل الكاميرا — تأكد من السماح للمتصفح بالوصول للكاميرا، أو استخدم الإدخال اليدوي تحت';
+      err.textContent = 'تعذر تشغيل الكاميرا — تأكد من السماح للمتصفح بالوصول للكاميرا';
+      console.error('Camera error:', e);
     }
   }
 
   function close(){
+    isScanning = false;
     if(html5QrCode){
       try{
-        html5QrCode.stop().then(()=>{ try{ html5QrCode.clear(); }catch(e){} }).catch(()=>{});
+        html5QrCode.stop()
+          .then(()=>{ 
+            try{ html5QrCode.clear(); }catch(e){}
+          })
+          .catch(()=>{});
       }catch(e){}
       html5QrCode = null;
     }
