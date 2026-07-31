@@ -96,6 +96,10 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="license-guard.js"></script>
 
+  <!-- قراءة الباركود من الكاميرا -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+  <script src="camera-scan.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   .receipt-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(8px); z-index:200; display:none; align-items:center; justify-content:center; padding:20px; }
@@ -162,7 +166,9 @@
       <h2>بحث عن صنف <span style="font-weight:400;color:var(--muted);font-size:11.5px;">بالباركود أو الكود أو الاسم</span></h2>
       <div class="search-box">
         <span class="ic">🔍</span>
-        <input id="searchInput" placeholder="اكتب 3 أو 4 أرقام/حروف من الباركود أو الاسم..." autocomplete="off">
+        <input id="searchInput" placeholder="اكتب 3 أو 4 أرقام/حروف من الباركود أو الاسم..." autocomplete="off" style="padding-left:78px;">
+        <button type="button" title="مسح الباركود بالكاميرا" onclick="scanInvoiceBarcode()"
+          style="position:absolute; left:44px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--muted); font-size:17px; cursor:pointer; line-height:1;">📷</button>
         <div class="search-results" id="searchResults"></div>
       </div>
 
@@ -307,6 +313,18 @@ const DB = {
   },
   async pickFolder(){
     if(!this.supported){ this.connected = true; return; }
+    try{
+      const saved = await idbGet('rootDirHandle');
+      if(saved){
+        const perm = await saved.requestPermission({mode:'readwrite'});
+        if(perm === 'granted'){
+          this.dirHandle = saved;
+          this.shopHandle = await this.dirHandle.getDirectoryHandle(SHOP_NAME,{create:true});
+          this.connected = true;
+          return;
+        }
+      }
+    }catch(e){ /* تجاهل وكمّل لاختيار مجلد جديد */ }
     this.dirHandle = await window.showDirectoryPicker({mode:'readwrite'});
     await idbSet('rootDirHandle', this.dirHandle);
     this.shopHandle = await this.dirHandle.getDirectoryHandle(SHOP_NAME,{create:true});
@@ -399,6 +417,20 @@ searchInput.addEventListener('keydown',(e)=>{
     scanBuf='';
   }
 });
+
+/* مسح باركود صنف أثناء كتابة الفاتورة: بيدور على الصنف في المخزون بنفس
+   الكود المطبوع على الملصق، ولو لقاه متاح بيضيفه للفاتورة فوراً بكل بياناته
+   (عيار، وزن، سعر، مصنعية) من غير أي كتابة يدوية */
+function scanInvoiceBarcode(){
+  HNScanner.open((code)=>{
+    const item = DATA.inventory.find(i=>i.code===code);
+    if(!item){ showToast('لا يوجد صنف بهذا الباركود في المخزون'); return; }
+    if(item.status!=='available'){ showToast('هذه القطعة مباعة بالفعل أو غير متاحة'); return; }
+    if(cart.some(c=>c.invId===item.id)){ showToast('هذا الصنف مضاف بالفعل في الفاتورة'); return; }
+    addToCart(item.id);
+    showToast('تمت إضافة "' + item.name + '" من الباركود ✅');
+  }, {title:'مسح باركود صنف للفاتورة'});
+}
 
 function addToCart(invId){
   const item = DATA.inventory.find(i=>i.id===invId);
@@ -605,11 +637,32 @@ async function shareReceiptWhatsapp(){
   const canvas = await html2canvas(el, {scale:3, backgroundColor:'#ffffff'}); // scale 3 = higher quality image
 
   canvas.toBlob(async (blob)=>{
-    let copied = false;
+    const fileName = 'فاتورة-' + document.getElementById('rInvNo').textContent.replace(/\s/g,'') + '.png';
+    const waNumber = normalizeEgyptPhone(currentReceiptPhone);
 
-    // Try copying the image directly to the clipboard (supported on Chrome/Edge,
-    // desktop and Android). If it works, the user just presses Ctrl+V (or
-    // long-press → Paste on mobile) inside the WhatsApp chat that opens next.
+    // ملحوظة أمانة: لا يوجد أي متصفح أو موقع يقدر يفتح شات عميل محدد على واتساب
+    // ويحط صورة جاهزة فيه ويخلّيك تدوس "إرسال" بس من غير أي خطوة تانية — ده قيد
+    // من واتساب نفسه لأسباب أمان (مفيش رابط wa.me بيدعم إرفاق صورة، ومفيش API
+    // لأي موقع يتحكم في شات محدد). اللي تحته أقرب حاجة ممكنة تقنياً:
+
+    // الخيار الأول (الأفضل على الموبايل): نافذة المشاركة الأصلية للجهاز، بتيجي
+    // ومعاها الصورة مرفقة جاهزة — تختار واتساب من القائمة، تختار شات العميل،
+    // وتدوس إرسال. خطوتين بس، والصورة مرفقة تلقائي بدون نسخ أو لصق.
+    try{
+      const file = new File([blob], fileName, {type:'image/png'});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({ files:[file], title: fileName, text: 'فاتورة من مجوهرات حسن نصار' });
+        showToast('اختر "واتساب" من القائمة، بعدها اختر شات العميل ودوس إرسال');
+        return;
+      }
+    }catch(e){
+      if(e && e.name === 'AbortError') return; // المستخدم قفل نافذة المشاركة بنفسه
+      // أي خطأ تاني: كمّل على الطريقة البديلة تحت
+    }
+
+    // الخيار البديل (سطح المكتب أو متصفح لا يدعم المشاركة الأصلية): نسخ الصورة
+    // للحافظة تلقائياً، وفتح شات العميل مباشرة — يبقى بس تدوس Ctrl+V وترسل.
+    let copied = false;
     try{
       if(navigator.clipboard && window.ClipboardItem){
         await navigator.clipboard.write([ new ClipboardItem({ 'image/png': blob }) ]);
@@ -617,18 +670,15 @@ async function shareReceiptWhatsapp(){
       }
     }catch(e){ copied = false; }
 
-    // Always open the customer's own WhatsApp chat directly.
-    const waNumber = normalizeEgyptPhone(currentReceiptPhone);
     window.open(`https://wa.me/${waNumber}`, '_blank');
 
     if(copied){
       showToast('اتفتح شات العميل، والصورة اتنسخت تلقائي — دوس Ctrl+V (أو الصق) جوه الشات وابعتها');
     } else {
-      // Fallback for browsers that block clipboard image writes (e.g. Safari, Firefox):
-      // download the image so the user can attach it manually — WhatsApp itself
-      // does not allow any website to attach a file automatically on these browsers.
+      // آخر بديل لو المتصفح مش بيدعم أي مما سبق (مثل Safari/Firefox القديمة):
+      // تنزيل الصورة عشان ترفقها يدوياً.
       const link = document.createElement('a');
-      link.download = 'فاتورة-' + document.getElementById('rInvNo').textContent.replace(/\s/g,'') + '.png';
+      link.download = fileName;
       link.href = URL.createObjectURL(blob);
       link.click();
       showToast('اتفتح شات العميل — متصفحك لا يدعم النسخ التلقائي، فتم تنزيل الصورة لإرفاقها يدوياً');
