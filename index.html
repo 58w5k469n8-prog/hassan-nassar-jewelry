@@ -9,6 +9,7 @@
     --bg:#08080A; --liquid-glass: rgba(24,24,28,0.45); --glass-border: rgba(255,255,255,0.08);
     --gold-1:#FFD60A; --gold-2:#FF9F0A; --cream:#F5F5F7; --muted:#8E8E93; --blue:#0A84FF;
     --green:#30D158; --red:#FF6961; --ease: cubic-bezier(.22,.61,.36,1); --sidebar-w:230px;
+    --fov:1100px; --spring: cubic-bezier(.34,1.56,.64,1);
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
@@ -30,7 +31,8 @@
   .nav-item .ic{ width:18px; text-align:center; }
   .nav-item:hover{ background:rgba(255,255,255,0.04); color:var(--cream); }
   .nav-item.active{ background:linear-gradient(120deg, rgba(255,214,10,0.14), rgba(255,159,10,0.08)); color:var(--cream); box-shadow:inset 0 0 0 1px rgba(255,159,10,0.25); }
-  .nav-item:active{ transform:scale(0.97); }
+  .nav-item{ transition:background .2s var(--ease), color .2s var(--ease), transform .22s var(--spring); }
+  .nav-item:active{ transform:scale(0.94); }
 
   .main{ flex:1; min-width:0; display:flex; flex-direction:column; }
   .ticker-wrap{ margin:14px 16px 0; padding:0 4px; }
@@ -46,14 +48,41 @@
   .content h1{ font-size:20px; margin-bottom:6px; }
   .content .sub{ color:var(--muted); font-size:13px; margin-bottom:22px; }
 
-  .module-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-  .mcard{ padding:22px; display:block; transition:transform .2s var(--ease); }
-  .mcard:hover{ transform:translateY(-3px); }
-  .mcard:active{ transform:scale(0.97); }
-  .mcard .ic{ font-size:26px; margin-bottom:12px; display:block; }
-  .mcard .t{ font-size:14.5px; font-weight:700; margin-bottom:6px; }
-  .mcard .d{ font-size:12px; color:var(--muted); line-height:1.7; }
-  .mcard .go{ margin-top:14px; font-size:11.5px; color:var(--gold-1); }
+  /* ===== Coverflow Selector + Animated Wave Rail (no traditional scrolling — wheel/touch drives selection) ===== */
+  .zviewport{ position:relative; height:calc(100vh - 210px); min-height:460px; display:flex; align-items:stretch; gap:6px; }
+  .wave-rail{ width:58px; flex-shrink:0; position:relative; overflow:visible; }
+  .wave-rail svg{ width:100%; height:100%; display:block; overflow:visible; }
+  .wave-g{ animation:waveSway 7s ease-in-out infinite; transform-origin:50% 50%; }
+  @keyframes waveSway{ 0%,100%{ transform:translateX(0) rotate(0deg); } 50%{ transform:translateX(3.5px) rotate(.7deg); } }
+  .wave-dot{ position:absolute; width:13px; height:13px; border-radius:50%; background:var(--gold-1); pointer-events:none;
+    box-shadow:0 0 16px 5px rgba(255,214,10,.55), 0 0 0 3px rgba(255,214,10,.12); transform:translate(-50%,-50%);
+    transition:top .55s var(--spring), left .55s var(--spring); z-index:3; }
+
+  .select-viewport{ flex:1; position:relative; overflow:hidden; touch-action:none; cursor:grab; }
+  .select-viewport:active{ cursor:grabbing; }
+  .module-grid{ position:absolute; inset:0; }
+  .mcard{ position:absolute; right:8px; left:64px; top:50%; padding:16px 20px; display:flex; align-items:center; gap:14px;
+    transform-origin:right center; will-change:transform,opacity; filter:saturate(1) brightness(1); }
+  .mcard .ic{ font-size:24px; flex-shrink:0; transition:transform .3s var(--spring); }
+  .mcard .txtwrap{ min-width:0; }
+  .mcard .t{ font-size:14px; font-weight:700; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mcard .d{ font-size:11.5px; color:var(--muted); line-height:1.6; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .mcard .go{ display:none; }
+  .mcard.is-active{ box-shadow:0 18px 50px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1.5px rgba(255,214,10,.35); }
+  .mcard.is-active .t{ color:var(--gold-1); }
+  .mcard:not(.is-active) .d{ opacity:.55; }
+  .mcard:hover .ic{ transform:scale(1.15) rotate(-3deg); }
+  .ripple{ position:absolute; border-radius:50%; background:radial-gradient(circle, rgba(255,214,10,.55), transparent 70%);
+    transform:translate(-50%,-50%) scale(0); pointer-events:none; animation:rippleGo .65s var(--ease) forwards; z-index:5; }
+  @keyframes rippleGo{ 0%{ transform:translate(-50%,-50%) scale(0); opacity:.9; } 100%{ transform:translate(-50%,-50%) scale(9); opacity:0; } }
+
+  .zhint{ position:absolute; bottom:8px; right:16px; font-size:11px; color:var(--muted);
+    display:flex; align-items:center; gap:6px; opacity:.75; pointer-events:none; z-index:2; }
+  .zhint .wheel-ic{ width:16px; height:24px; border:1.5px solid var(--muted); border-radius:9px; position:relative; }
+  .zhint .wheel-ic::after{ content:""; position:absolute; top:4px; left:50%; width:2px; height:5px; background:var(--muted); transform:translateX(-50%); animation:zhintBob 1.4s ease-in-out infinite; }
+  @keyframes zhintBob{ 0%,100%{ top:4px; opacity:1;} 50%{ top:11px; opacity:.3;} }
+  @media(prefers-reduced-motion:reduce){ .mcard,.wave-dot{ transition:none!important; } .wave-g{ animation:none!important; } }
+  @media (max-width:1000px){ .zviewport{ height:calc(100vh - 260px); } .mcard{ left:56px; } }
 
   .setup-gate{ display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
   .setup-card{ max-width:440px; width:100%; padding:32px; text-align:center; }
@@ -109,15 +138,36 @@
       <h1>مرحباً بك في نظام إدارة مجوهرات حسن نصار</h1>
       <div class="sub">اختر الوحدة التي تريد العمل عليها — جميع الوحدات متصلة بنفس مجلد البيانات وتتحدث مع بعضها تلقائياً.</div>
 
-      <div class="module-grid">
-        <a href="hassan-nassar-jewelry-02-dashboard.html"><div class="mcard glass"><span class="ic">📈</span><div class="t">لوحة التحكم</div><div class="d">نظرة شاملة على المبيعات، الخزنة، والتنبيهات الذكية.</div><div class="go">فتح ←</div></div></a>
-        <a href="hassan-nassar-jewelry-04-invoice.html"><div class="mcard glass"><span class="ic">🧾</span><div class="t">فاتورة بيع جديدة</div><div class="d">بحث ذكي، حساب تلقائي، دفع متعدد، وخصم فوري من المخزون.</div><div class="go">فتح ←</div></div></a>
-        <a href="hassan-nassar-jewelry-03-data-core.html"><div class="mcard glass"><span class="ic">📦</span><div class="t">المخزون · العملاء · الموردين · الخزنة · الصاغة</div><div class="d">قاعدة البيانات الأساسية لكل عمليات المحل.</div><div class="go">فتح ←</div></div></a>
-        <a href="hassan-nassar-jewelry-05-barcode-reports.html"><div class="mcard glass"><span class="ic">🖨️</span><div class="t">الباركود والتقارير</div><div class="d">توليد وطباعة ملصقات، وتقارير جرد مرنة قابلة للتصدير.</div><div class="go">فتح ←</div></div></a>
-        <a href="hassan-nassar-jewelry-06-settings-users.html"><div class="mcard glass"><span class="ic">⚙️</span><div class="t">الإعدادات · المستخدمين · عن المطور</div><div class="d">سعر الذهب الموحد، الصلاحيات، وسجل العمليات.</div><div class="go">فتح ←</div></div></a>
-        <a href="hassan-nassar-jewelry-07-transactions.html"><div class="mcard glass"><span class="ic">♻️</span><div class="t">الكسر · الاسترجاع · الحجز · الصيانة</div><div class="d">كل عمليات ما بعد البيع في مكان واحد.</div><div class="go">فتح ←</div></div></a>
-        <a href="hassan-nassar-jewelry-08-finance-final.html"><div class="mcard glass"><span class="ic">💵</span><div class="t">المصروفات · المقاصة · شاشة العميل · الشهادات</div><div class="d">الإدارة المالية الكاملة وشهادات الضمان.</div><div class="go">فتح ←</div></div></a>
-        <a href="hassan-nassar-jewelry-01-setup.html"><div class="mcard glass"><span class="ic">🔐</span><div class="t">تأسيس النظام والتراخيص</div><div class="d">شاشة المطور واعتماد التراخيص (تُستخدم مرة واحدة فقط).</div><div class="go">فتح ←</div></div></a>
+      <div class="zviewport" id="zViewport">
+        <div class="wave-rail">
+          <svg viewBox="0 0 64 800" preserveAspectRatio="none">
+            <g class="wave-g">
+              <path d="M32,0 C50,40 14,80 32,120 C50,160 14,200 32,240 C50,280 14,320 32,360 C50,400 14,440 32,480 C50,520 14,560 32,600 C50,640 14,680 32,720 C50,760 14,790 32,800"
+                fill="none" stroke="url(#waveGrad)" stroke-width="2.5" stroke-linecap="round"/>
+              <defs>
+                <linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#FFD60A" stop-opacity=".15"/>
+                  <stop offset="50%" stop-color="#FFD60A" stop-opacity=".6"/>
+                  <stop offset="100%" stop-color="#FF9F0A" stop-opacity=".15"/>
+                </linearGradient>
+              </defs>
+            </g>
+          </svg>
+          <div class="wave-dot" id="waveDot"></div>
+        </div>
+        <div class="select-viewport" id="selectViewport">
+          <div class="module-grid" id="moduleGrid">
+            <a href="hassan-nassar-jewelry-02-dashboard.html"><div class="mcard glass"><span class="ic">📈</span><div class="txtwrap"><div class="t">لوحة التحكم</div><div class="d">نظرة شاملة على المبيعات، الخزنة، والتنبيهات الذكية.</div></div></div></a>
+            <a href="hassan-nassar-jewelry-04-invoice.html"><div class="mcard glass"><span class="ic">🧾</span><div class="txtwrap"><div class="t">فاتورة بيع جديدة</div><div class="d">بحث ذكي، حساب تلقائي، دفع متعدد، وخصم فوري من المخزون.</div></div></div></a>
+            <a href="hassan-nassar-jewelry-03-data-core.html"><div class="mcard glass"><span class="ic">📦</span><div class="txtwrap"><div class="t">المخزون · العملاء · الموردين · الخزنة · الصاغة</div><div class="d">قاعدة البيانات الأساسية لكل عمليات المحل.</div></div></div></a>
+            <a href="hassan-nassar-jewelry-05-barcode-reports.html"><div class="mcard glass"><span class="ic">🖨️</span><div class="txtwrap"><div class="t">الباركود والتقارير</div><div class="d">توليد وطباعة ملصقات، وتقارير جرد مرنة قابلة للتصدير.</div></div></div></a>
+            <a href="hassan-nassar-jewelry-06-settings-users.html"><div class="mcard glass"><span class="ic">⚙️</span><div class="txtwrap"><div class="t">الإعدادات · المستخدمين · عن المطور</div><div class="d">سعر الذهب الموحد، الصلاحيات، وسجل العمليات.</div></div></div></a>
+            <a href="hassan-nassar-jewelry-07-transactions.html"><div class="mcard glass"><span class="ic">♻️</span><div class="txtwrap"><div class="t">الكسر · الاسترجاع · الحجز · الصيانة</div><div class="d">كل عمليات ما بعد البيع في مكان واحد.</div></div></div></a>
+            <a href="hassan-nassar-jewelry-08-finance-final.html"><div class="mcard glass"><span class="ic">💵</span><div class="txtwrap"><div class="t">المصروفات · المقاصة · شاشة العميل · الشهادات</div><div class="d">الإدارة المالية الكاملة وشهادات الضمان.</div></div></div></a>
+            <a href="hassan-nassar-jewelry-01-setup.html"><div class="mcard glass"><span class="ic">🔐</span><div class="txtwrap"><div class="t">تأسيس النظام والتراخيص</div><div class="d">شاشة المطور واعتماد التراخيص (تُستخدم مرة واحدة فقط).</div></div></div></a>
+          </div>
+          <div class="zhint"><span class="wheel-ic"></span> مرّر بعجلة الماوس أو اسحب للتنقل</div>
+        </div>
       </div>
     </div>
   </div>
@@ -183,11 +233,104 @@ async function afterConnect(){
     html += `<div class="tick-item"><span class="k">الفرع</span><span class="v">الفرع الرئيسي</span></div><div class="tick-sep"></div>`;
   }
   track.innerHTML = html;
+  initZScene();
+}
+/* ===================== COVERFLOW + WAVE ENGINE ===================== */
+const Z = { cards:[], count:0, target:0, current:0, max:0, hoverIdx:-1, dragging:false, dragStartY:0, dragStartTarget:0, raf:null, inited:false, waveDot:null, railH:0 };
+function zRowStep(){ return window.innerWidth<=640 ? 74 : 92; }
+function zRender(){
+  const step = zRowStep();
+  const activeIdx = Math.round(Z.current);
+  Z.cards.forEach((el,i)=>{
+    let diff = i - Z.current;
+    const dist = Math.abs(diff);
+    // العنصر اللي الماوس عليه بيتقدّم خطوة بسيطة ناحية المنتصف قبل أي نقر (استباق بصري)
+    const hoverPull = (i===Z.hoverIdx && i!==activeIdx) ? -Math.sign(diff)*0.18 : 0;
+    diff += hoverPull;
+    const ty = diff*step;
+    const scale = Math.max(0.62, 1 - dist*0.13);
+    const opacity = Math.max(0.16, 1 - dist*0.30);
+    el.style.transform = `translateY(calc(-50% + ${ty}px)) scale(${scale})`;
+    el.style.opacity = opacity.toFixed(3);
+    el.classList.toggle('is-active', i===activeIdx);
+    el.style.zIndex = 100 - Math.round(dist*10);
+    el.style.pointerEvents = dist < 4 ? 'auto' : 'none';
+  });
+  if(Z.waveDot){
+    const railH = Z.waveDot.parentElement.clientHeight || 400;
+    const pct = Z.count>1 ? Z.current/(Z.count-1) : 0;
+    const topPx = 10 + pct*(railH-20);
+    const swayX = 26 + Math.sin(Z.current*1.15)*16; // نفس تموّج المسار تقريباً
+    Z.waveDot.style.top = topPx+'px';
+    Z.waveDot.style.left = swayX+'px';
+  }
+}
+function zTick(){
+  const diff = Z.target - Z.current;
+  if(Math.abs(diff) < 0.004){ Z.current = Z.target; zRender(); Z.raf = null; return; } // demand rendering: توقف عند الاستقرار التام
+  Z.current += diff * 0.17; // حركة نابضية هادئة نحو الهدف
+  zRender();
+  Z.raf = requestAnimationFrame(zTick);
+}
+function zRequestFrame(){ if(!Z.raf) Z.raf = requestAnimationFrame(zTick); }
+function zSetTarget(v){ Z.target = Math.max(0, Math.min(Z.count-1, v)); zRequestFrame(); }
+function zRipple(el, ev){
+  const r = el.getBoundingClientRect();
+  const span = document.createElement('span');
+  span.className = 'ripple';
+  const size = Math.max(r.width, r.height)*1.1;
+  span.style.width = span.style.height = size+'px';
+  span.style.left = ((ev.clientX ?? (r.left+r.width/2)) - r.left)+'px';
+  span.style.top = ((ev.clientY ?? (r.top+r.height/2)) - r.top)+'px';
+  el.appendChild(span);
+  setTimeout(()=> span.remove(), 700);
+}
+function initZScene(){
+  if(Z.inited) return; Z.inited = true;
+  const vp = document.getElementById('zViewport');
+  const svp = document.getElementById('selectViewport');
+  const grid = document.getElementById('moduleGrid');
+  if(!vp || !svp || !grid) return;
+  Z.cards = [...grid.querySelectorAll('.mcard')];
+  Z.count = Z.cards.length;
+  Z.waveDot = document.getElementById('waveDot');
+  zRender();
+
+  Z.cards.forEach((el,i)=>{
+    el.addEventListener('mouseenter', ()=>{ Z.hoverIdx=i; zRequestFrame(); });
+    el.addEventListener('mouseleave', ()=>{ if(Z.hoverIdx===i){ Z.hoverIdx=-1; zRequestFrame(); } });
+    el.addEventListener('click', (e)=>{
+      const idx = Math.round(Z.current);
+      if(i!==idx){ e.preventDefault(); zSetTarget(i); return; } // أول نقرة تحدد الاختيار كمنتصف المشهد
+      e.preventDefault();
+      zRipple(el, e); // نقرة ثانية على العنصر المُختار: تأثير مبهر هادئ قبل فتح الصفحة
+      const href = el.parentElement.getAttribute('href');
+      setTimeout(()=>{ if(href) window.location.href = href; }, 260);
+    });
+  });
+
+  svp.addEventListener('wheel', (e)=>{
+    e.preventDefault(); // مفيش سكرول تقليدي للصفحة — العجلة بتحرك الاختيار فقط
+    zSetTarget(Z.target + (e.deltaY>0? 0.42 : -0.42) * Math.max(1, Math.abs(e.deltaY)/60));
+  }, {passive:false});
+
+  svp.addEventListener('touchstart', (e)=>{
+    Z.dragging = true; Z.dragStartY = e.touches[0].clientY; Z.dragStartTarget = Z.target;
+  }, {passive:true});
+  svp.addEventListener('touchmove', (e)=>{
+    if(!Z.dragging) return;
+    const dy = Z.dragStartY - e.touches[0].clientY;
+    zSetTarget(Z.dragStartTarget + dy/zRowStep());
+  }, {passive:true});
+  svp.addEventListener('touchend', ()=>{ Z.dragging = false; });
+
+  window.addEventListener('resize', zRender);
 }
 function skipGate(){
   document.getElementById('gateScreen').style.display='none';
   document.getElementById('appScreen').style.display='flex';
   document.getElementById('tickerTrack').innerHTML = '<div class="tick-item"><span class="k">اختر وحدة من القائمة للبدء</span></div>';
+  initZScene();
 }
 (async function boot(){
   // First-time visitors (no completed setup/license yet) go straight to the setup screen.
