@@ -9,7 +9,6 @@
     --bg:#08080A; --liquid-glass: rgba(24,24,28,0.45); --glass-border: rgba(255,255,255,0.08);
     --gold-1:#FFD60A; --gold-2:#FF9F0A; --cream:#F5F5F7; --muted:#8E8E93; --blue:#0A84FF;
     --green:#30D158; --red:#FF6961; --ease: cubic-bezier(.22,.61,.36,1); --sidebar-w:230px;
-    --fov:1100px; --spring: cubic-bezier(.34,1.56,.64,1);
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
@@ -31,8 +30,7 @@
   .nav-item .ic{ width:18px; text-align:center; }
   .nav-item:hover{ background:rgba(255,255,255,0.04); color:var(--cream); }
   .nav-item.active{ background:linear-gradient(120deg, rgba(255,214,10,0.14), rgba(255,159,10,0.08)); color:var(--cream); box-shadow:inset 0 0 0 1px rgba(255,159,10,0.25); }
-  .nav-item{ transition:background .2s var(--ease), color .2s var(--ease), transform .22s var(--spring); }
-  .nav-item:active{ transform:scale(0.94); }
+  .nav-item:active{ transform:scale(0.97); }
 
   .main{ flex:1; min-width:0; display:flex; flex-direction:column; }
   .ticker-wrap{ margin:14px 16px 0; padding:0 4px; }
@@ -48,31 +46,14 @@
   .content h1{ font-size:20px; margin-bottom:6px; }
   .content .sub{ color:var(--muted); font-size:13px; margin-bottom:22px; }
 
-  /* ===== Z-Depth Scroll Scene (no traditional scrolling — wheel/touch moves the camera along Z) ===== */
-  .zviewport{ position:relative; height:calc(100vh - 210px); min-height:420px; overflow:hidden; perspective:var(--fov); perspective-origin:50% 42%; -webkit-perspective:var(--fov); touch-action:none; cursor:grab; }
-  .zviewport:active{ cursor:grabbing; }
-  .zscene{ position:absolute; inset:0; transform-style:preserve-3d; will-change:transform; }
-  .module-grid{ position:absolute; inset:0; transform-style:preserve-3d; }
-  .mcard{ position:absolute; top:50%; left:50%; width:min(320px,72vw); padding:22px; display:block;
-    transform:translate(-50%,-50%); will-change:transform,opacity; backface-visibility:hidden; }
-  .mcard:hover{ box-shadow:0 20px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(255,214,10,.18); }
-  .mcard:active{ transition:transform .18s var(--spring); }
-  .mcard .ic{ font-size:28px; margin-bottom:12px; display:block; transition:transform .3s var(--spring); }
-  .mcard:hover .ic{ transform:scale(1.18) rotate(-4deg) translateZ(20px); }
+  .module-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .mcard{ padding:22px; display:block; transition:transform .2s var(--ease); }
+  .mcard:hover{ transform:translateY(-3px); }
+  .mcard:active{ transform:scale(0.97); }
+  .mcard .ic{ font-size:26px; margin-bottom:12px; display:block; }
   .mcard .t{ font-size:14.5px; font-weight:700; margin-bottom:6px; }
   .mcard .d{ font-size:12px; color:var(--muted); line-height:1.7; }
-  .mcard .go{ margin-top:14px; font-size:11.5px; color:var(--gold-1); transition:transform .25s var(--spring); display:inline-block; }
-  .mcard:hover .go{ transform:translateX(-5px); }
-  .zhint{ position:absolute; bottom:10px; left:50%; transform:translateX(-50%); font-size:11px; color:var(--muted);
-    display:flex; align-items:center; gap:6px; opacity:.75; pointer-events:none; z-index:2; }
-  .zhint .wheel-ic{ width:16px; height:24px; border:1.5px solid var(--muted); border-radius:9px; position:relative; }
-  .zhint .wheel-ic::after{ content:""; position:absolute; top:4px; left:50%; width:2px; height:5px; background:var(--muted); transform:translateX(-50%); animation:zhintBob 1.4s ease-in-out infinite; }
-  @keyframes zhintBob{ 0%,100%{ top:4px; opacity:1;} 50%{ top:11px; opacity:.3;} }
-  .zdots{ position:absolute; top:50%; left:14px; transform:translateY(-50%); display:flex; flex-direction:column; gap:7px; z-index:2; }
-  .zdots span{ width:5px; height:5px; border-radius:50%; background:rgba(255,255,255,.15); transition:all .3s var(--ease); }
-  .zdots span.on{ background:var(--gold-1); height:16px; box-shadow:0 0 8px rgba(255,214,10,.5); }
-  @media(prefers-reduced-motion:reduce){ .mcard{ transition:none!important; } }
-  @media (max-width:1000px){ .zviewport{ height:calc(100vh - 260px); } }
+  .mcard .go{ margin-top:14px; font-size:11.5px; color:var(--gold-1); }
 
   .setup-gate{ display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
   .setup-card{ max-width:440px; width:100%; padding:32px; text-align:center; }
@@ -128,19 +109,15 @@
       <h1>مرحباً بك في نظام إدارة مجوهرات حسن نصار</h1>
       <div class="sub">اختر الوحدة التي تريد العمل عليها — جميع الوحدات متصلة بنفس مجلد البيانات وتتحدث مع بعضها تلقائياً.</div>
 
-      <div class="zviewport" id="zViewport">
-        <div class="zdots" id="zDots"></div>
-        <div class="module-grid" id="moduleGrid">
-          <a href="hassan-nassar-jewelry-02-dashboard.html"><div class="mcard glass"><span class="ic">📈</span><div class="t">لوحة التحكم</div><div class="d">نظرة شاملة على المبيعات، الخزنة، والتنبيهات الذكية.</div><div class="go">فتح ←</div></div></a>
-          <a href="hassan-nassar-jewelry-04-invoice.html"><div class="mcard glass"><span class="ic">🧾</span><div class="t">فاتورة بيع جديدة</div><div class="d">بحث ذكي، حساب تلقائي، دفع متعدد، وخصم فوري من المخزون.</div><div class="go">فتح ←</div></div></a>
-          <a href="hassan-nassar-jewelry-03-data-core.html"><div class="mcard glass"><span class="ic">📦</span><div class="t">المخزون · العملاء · الموردين · الخزنة · الصاغة</div><div class="d">قاعدة البيانات الأساسية لكل عمليات المحل.</div><div class="go">فتح ←</div></div></a>
-          <a href="hassan-nassar-jewelry-05-barcode-reports.html"><div class="mcard glass"><span class="ic">🖨️</span><div class="t">الباركود والتقارير</div><div class="d">توليد وطباعة ملصقات، وتقارير جرد مرنة قابلة للتصدير.</div><div class="go">فتح ←</div></div></a>
-          <a href="hassan-nassar-jewelry-06-settings-users.html"><div class="mcard glass"><span class="ic">⚙️</span><div class="t">الإعدادات · المستخدمين · عن المطور</div><div class="d">سعر الذهب الموحد، الصلاحيات، وسجل العمليات.</div><div class="go">فتح ←</div></div></a>
-          <a href="hassan-nassar-jewelry-07-transactions.html"><div class="mcard glass"><span class="ic">♻️</span><div class="t">الكسر · الاسترجاع · الحجز · الصيانة</div><div class="d">كل عمليات ما بعد البيع في مكان واحد.</div><div class="go">فتح ←</div></div></a>
-          <a href="hassan-nassar-jewelry-08-finance-final.html"><div class="mcard glass"><span class="ic">💵</span><div class="t">المصروفات · المقاصة · شاشة العميل · الشهادات</div><div class="d">الإدارة المالية الكاملة وشهادات الضمان.</div><div class="go">فتح ←</div></div></a>
-          <a href="hassan-nassar-jewelry-01-setup.html"><div class="mcard glass"><span class="ic">🔐</span><div class="t">تأسيس النظام والتراخيص</div><div class="d">شاشة المطور واعتماد التراخيص (تُستخدم مرة واحدة فقط).</div><div class="go">فتح ←</div></div></a>
-        </div>
-        <div class="zhint"><span class="wheel-ic"></span> مرّر بعجلة الماوس أو اسحب للتنقل بين الوحدات</div>
+      <div class="module-grid">
+        <a href="hassan-nassar-jewelry-02-dashboard.html"><div class="mcard glass"><span class="ic">📈</span><div class="t">لوحة التحكم</div><div class="d">نظرة شاملة على المبيعات، الخزنة، والتنبيهات الذكية.</div><div class="go">فتح ←</div></div></a>
+        <a href="hassan-nassar-jewelry-04-invoice.html"><div class="mcard glass"><span class="ic">🧾</span><div class="t">فاتورة بيع جديدة</div><div class="d">بحث ذكي، حساب تلقائي، دفع متعدد، وخصم فوري من المخزون.</div><div class="go">فتح ←</div></div></a>
+        <a href="hassan-nassar-jewelry-03-data-core.html"><div class="mcard glass"><span class="ic">📦</span><div class="t">المخزون · العملاء · الموردين · الخزنة · الصاغة</div><div class="d">قاعدة البيانات الأساسية لكل عمليات المحل.</div><div class="go">فتح ←</div></div></a>
+        <a href="hassan-nassar-jewelry-05-barcode-reports.html"><div class="mcard glass"><span class="ic">🖨️</span><div class="t">الباركود والتقارير</div><div class="d">توليد وطباعة ملصقات، وتقارير جرد مرنة قابلة للتصدير.</div><div class="go">فتح ←</div></div></a>
+        <a href="hassan-nassar-jewelry-06-settings-users.html"><div class="mcard glass"><span class="ic">⚙️</span><div class="t">الإعدادات · المستخدمين · عن المطور</div><div class="d">سعر الذهب الموحد، الصلاحيات، وسجل العمليات.</div><div class="go">فتح ←</div></div></a>
+        <a href="hassan-nassar-jewelry-07-transactions.html"><div class="mcard glass"><span class="ic">♻️</span><div class="t">الكسر · الاسترجاع · الحجز · الصيانة</div><div class="d">كل عمليات ما بعد البيع في مكان واحد.</div><div class="go">فتح ←</div></div></a>
+        <a href="hassan-nassar-jewelry-08-finance-final.html"><div class="mcard glass"><span class="ic">💵</span><div class="t">المصروفات · المقاصة · شاشة العميل · الشهادات</div><div class="d">الإدارة المالية الكاملة وشهادات الضمان.</div><div class="go">فتح ←</div></div></a>
+        <a href="hassan-nassar-jewelry-01-setup.html"><div class="mcard glass"><span class="ic">🔐</span><div class="t">تأسيس النظام والتراخيص</div><div class="d">شاشة المطور واعتماد التراخيص (تُستخدم مرة واحدة فقط).</div><div class="go">فتح ←</div></div></a>
       </div>
     </div>
   </div>
@@ -206,80 +183,11 @@ async function afterConnect(){
     html += `<div class="tick-item"><span class="k">الفرع</span><span class="v">الفرع الرئيسي</span></div><div class="tick-sep"></div>`;
   }
   track.innerHTML = html;
-  initZScene();
-}
-/* ===================== Z-DEPTH SCENE ENGINE ===================== */
-const Z = { cards:[], count:0, target:0, current:0, max:0, step:640, dragging:false, dragStartY:0, dragStartTarget:0, raf:null, inited:false };
-function zAdaptFOV(){
-  const w = window.innerWidth;
-  const fov = w<=640 ? 720 : w<=1000 ? 900 : 1100;
-  document.documentElement.style.setProperty('--fov', fov+'px');
-}
-function zLayout(){
-  // كل كارت له عمق ثابت على المحور Z بترتيب القائمة؛ عمق الكاميرا الحالي بيحدد مين قدام ومين وراه
-  Z.cards.forEach((el,i)=>{ el.dataset.z = i*Z.step; });
-  Z.max = (Z.count-1)*Z.step;
-}
-function zRender(){
-  Z.cards.forEach((el,i)=>{
-    const z = (i*Z.step) - Z.current;
-    const dist = Math.abs(z);
-    const scale = Math.max(0.55, 1 - dist/2600);
-    const opacity = Math.max(0, 1 - dist/900);
-    el.style.transform = `translate(-50%,-50%) translateZ(${z}px) scale(${scale})`;
-    el.style.opacity = opacity.toFixed(3);
-    el.style.pointerEvents = dist < 420 ? 'auto' : 'none';
-    el.style.zIndex = 1000 - Math.round(dist);
-  });
-  const dots = document.getElementById('zDots');
-  if(dots){
-    const active = Math.round(Z.current/Z.step);
-    [...dots.children].forEach((d,i)=> d.classList.toggle('on', i===active));
-  }
-}
-function zTick(){
-  const diff = Z.target - Z.current;
-  if(Math.abs(diff) < 0.5){ Z.current = Z.target; zRender(); Z.raf = null; return; } // demand rendering: توقف عند الاستقرار
-  Z.current += diff * 0.16; // spring-ish easing نحو الهدف
-  zRender();
-  Z.raf = requestAnimationFrame(zTick);
-}
-function zRequestFrame(){ if(!Z.raf) Z.raf = requestAnimationFrame(zTick); }
-function zSetTarget(v){ Z.target = Math.max(0, Math.min(Z.max, v)); zRequestFrame(); }
-function initZScene(){
-  if(Z.inited) return; Z.inited = true;
-  const vp = document.getElementById('zViewport');
-  const grid = document.getElementById('moduleGrid');
-  if(!vp || !grid) return;
-  Z.cards = [...grid.querySelectorAll('.mcard')];
-  Z.count = Z.cards.length;
-  zLayout();
-  const dots = document.getElementById('zDots');
-  if(dots) dots.innerHTML = Z.cards.map(()=>'<span></span>').join('');
-  zAdaptFOV(); zRender();
-
-  vp.addEventListener('wheel', (e)=>{
-    e.preventDefault(); // مفيش سكرول تقليدي للصفحة — العجلة بتحرك الكاميرا على Z فقط
-    zSetTarget(Z.target + e.deltaY * 1.35);
-  }, {passive:false});
-
-  vp.addEventListener('touchstart', (e)=>{
-    Z.dragging = true; Z.dragStartY = e.touches[0].clientY; Z.dragStartTarget = Z.target;
-  }, {passive:true});
-  vp.addEventListener('touchmove', (e)=>{
-    if(!Z.dragging) return;
-    const dy = Z.dragStartY - e.touches[0].clientY;
-    zSetTarget(Z.dragStartTarget + dy * 2.2);
-  }, {passive:true});
-  vp.addEventListener('touchend', ()=>{ Z.dragging = false; });
-
-  window.addEventListener('resize', ()=>{ zAdaptFOV(); zRender(); });
 }
 function skipGate(){
   document.getElementById('gateScreen').style.display='none';
   document.getElementById('appScreen').style.display='flex';
   document.getElementById('tickerTrack').innerHTML = '<div class="tick-item"><span class="k">اختر وحدة من القائمة للبدء</span></div>';
-  initZScene();
 }
 (async function boot(){
   // First-time visitors (no completed setup/license yet) go straight to the setup screen.
