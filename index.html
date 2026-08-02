@@ -272,7 +272,7 @@ async function submitAuth(){
       'auth/invalid-email':'رقم الهاتف غير صالح',
       'auth/weak-password':'كلمة السر ضعيفة جداً'
     };
-    showAuthError(map[e.code] || 'حدث خطأ: تأكد من الاتصال بالإنترنت وحاول مرة أخرى');
+    showAuthError(map[e.code] || ('حدث خطأ (' + (e.code || e.message || 'غير معروف') + ') — تأكد من تفعيل Email/Password في Firebase Authentication وقواعد Firestore'));
   }
 }
 
