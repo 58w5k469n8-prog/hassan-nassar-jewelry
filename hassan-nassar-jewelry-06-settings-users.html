@@ -487,7 +487,7 @@ async function loadAccounts(){
       <td style="padding:8px 4px;font-family:ui-monospace,Menlo,monospace;">${r.phone || '—'}</td>
       <td style="padding:8px 4px;color:var(--muted);">${fmt(r.createdAt)}</td>
       <td style="padding:8px 4px;color:var(--muted);">${fmt(r.lastLogin)}</td>
-      <td style="padding:8px 4px;">${r.disabled ? '<span style="color:#FF9791;">معطّل</span>' : '<span style="color:var(--green);">فعّال</span>'}</td>
+      <td style="padding:8px 4px;">${r.disabled ? (r.lastLogin ? '<span style="color:#FF9791;">معطّل</span>' : '<span style="color:var(--gold-1);">قيد الموافقة</span>') : '<span style="color:var(--green);">فعّال</span>'}</td>
       <td style="padding:8px 4px;white-space:nowrap;">
         <button class="btn btn-ghost btn-sm" onclick="toggleAccountDisabled('${r.id}', ${!r.disabled})">${r.disabled ? 'تفعيل' : 'تعطيل'}</button>
         <button class="btn btn-danger btn-sm" onclick="deleteAccount('${r.id}')">حذف</button>
