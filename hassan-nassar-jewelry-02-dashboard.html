@@ -246,18 +246,19 @@
       <div class="txt"><b>حسن نصار</b><small>الفرع الرئيسي</small></div>
     </div>
 
-    <a href="index.html"><div class="nav-item"><span class="ic">🏠</span> الرئيسية</div></a>
-    <a href="hassan-nassar-jewelry-04-invoice.html"><div class="nav-item"><span class="ic">🧾</span> فاتورة بيع جديدة</div></a>
-    <a href="hassan-nassar-jewelry-03-data-core.html"><div class="nav-item"><span class="ic">📦</span> المخزون بالعيار</div></a>
-    <a href="hassan-nassar-jewelry-03-data-core.html"><div class="nav-item"><span class="ic">👥</span> العملاء</div></a>
-    <a href="hassan-nassar-jewelry-03-data-core.html"><div class="nav-item"><span class="ic">🚚</span> الموردين</div></a>
-    <a href="hassan-nassar-jewelry-03-data-core.html"><div class="nav-item"><span class="ic">🔨</span> حسابات الصاغة</div></a>
-    <a href="hassan-nassar-jewelry-03-data-core.html"><div class="nav-item"><span class="ic">💰</span> الخزنة</div></a>
+    <div class="nav-item active"><span class="ic">🏠</span> الرئيسية</div>
+    <div class="nav-item"><span class="ic">🧾</span> فاتورة بيع جديدة</div>
+    <div class="nav-item"><span class="ic">📦</span> المخزون بالعيار</div>
+    <div class="nav-item"><span class="ic">👥</span> العملاء</div>
+    <div class="nav-item"><span class="ic">🚚</span> الموردين</div>
+    <div class="nav-item"><span class="ic">🔨</span> حسابات الصاغة</div>
+    <div class="nav-item"><span class="ic">💰</span> الخزنة</div>
+
     <div class="nav-section-label">تقارير وإعدادات</div>
-    <a href="hassan-nassar-jewelry-05-barcode-reports.html"><div class="nav-item"><span class="ic">📊</span> التقارير والجرد</div></a>
-    <a href="hassan-nassar-jewelry-05-barcode-reports.html"><div class="nav-item"><span class="ic">🖨️</span> باركود وملصقات</div></a>
-    <a href="hassan-nassar-jewelry-06-settings-users.html"><div class="nav-item"><span class="ic">⚙️</span> الإعدادات</div></a>
-    <a href="hassan-nassar-jewelry-06-settings-users.html"><div class="nav-item"><span class="ic">ℹ️</span> عن المطور</div></a>
+    <div class="nav-item"><span class="ic">📊</span> التقارير والجرد</div>
+    <div class="nav-item"><span class="ic">🖨️</span> باركود وملصقات</div>
+    <div class="nav-item"><span class="ic">⚙️</span> الإعدادات</div>
+    <div class="nav-item"><span class="ic">ℹ️</span> عن المطور</div>
   </div>
 
   <!-- ===== MAIN ===== -->
@@ -287,23 +288,23 @@
       <div class="kpi-grid">
         <div class="kpi-card glass">
           <span class="lbl">مبيعات اليوم</span>
-          <span class="val">48,250 ج.م</span>
-          <span class="delta" style="color:var(--green);">▲ 12% عن أمس</span>
+          <span class="val" id="kpiSalesToday">0 ج.م</span>
+          <span class="delta" id="kpiSalesDelta" style="color:var(--muted);">لا توجد بيانات كافية</span>
         </div>
         <div class="kpi-card glass">
           <span class="lbl">رصيد الخزنة</span>
-          <span class="val">312,900 ج.م</span>
+          <span class="val" id="kpiSafeBalance">0 ج.م</span>
           <span class="delta" style="color:var(--muted);">مطابق لكل الحركات</span>
         </div>
         <div class="kpi-card glass">
           <span class="lbl">إجمالي وزن المخزون</span>
-          <span class="val">4,182.3 جم</span>
+          <span class="val" id="kpiInventoryWeight">0 جم</span>
           <span class="delta" style="color:var(--muted);">كل الأعيرة</span>
         </div>
         <div class="kpi-card glass">
           <span class="lbl">فواتير اليوم</span>
-          <span class="val">27 فاتورة</span>
-          <span class="delta" style="color:var(--gold-1);">أعلى مبيعًا: عيار 21</span>
+          <span class="val" id="kpiInvoicesToday">0 فاتورة</span>
+          <span class="delta" id="kpiTopKarat" style="color:var(--gold-1);">لا توجد فواتير بعد</span>
         </div>
       </div>
 
@@ -388,6 +389,81 @@
 </div>
 
 <script>
+/* ===== DB engine (read-only here — same storage used by all other modules) ===== */
+function idbOpen(){ return new Promise((res,rej)=>{ const r=indexedDB.open('hn_db_meta',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function idbGet(k){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction('kv','readonly'); const rq=tx.objectStore('kv').get(k); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error); }); }
+const SHOP_NAME = 'مجوهرات حسن نصار';
+const DB = {
+  supported:'showDirectoryPicker' in window, dirHandle:null, shopHandle:null, connected:false,
+  async tryAutoConnect(){
+    if(!this.supported){ this.connected=true; return true; }
+    try{ const h=await idbGet('rootDirHandle'); if(!h) return false;
+      const perm=await h.queryPermission({mode:'readwrite'});
+      if(perm!=='granted'){ const req=await h.requestPermission({mode:'readwrite'}); if(req!=='granted') return false; }
+      this.dirHandle=h; this.shopHandle=await h.getDirectoryHandle(SHOP_NAME,{create:true}); this.connected=true; return true;
+    }catch(e){ return false; }
+  },
+  async read(c,fb){
+    if(this.supported && this.shopHandle){ try{ const fh=await this.shopHandle.getFileHandle(c+'.json'); const f=await fh.getFile(); return JSON.parse(await f.text()); }catch(e){ return fb; } }
+    const v=await idbGet('fallback_'+c); return v!==undefined? v: fb;
+  }
+};
+
+function fmtMoney(n){ return Math.round(n).toLocaleString('ar-EG'); }
+
+async function loadRealKpis(){
+  const ok = await DB.tryAutoConnect();
+  if(!ok) return; // no data connected yet — KPI cards stay at their zero defaults
+
+  const inventory = await DB.read('inventory', []);
+  const safe = await DB.read('safe', []);
+  const invoices = await DB.read('invoices', []);
+
+  // إجمالي وزن المخزون المتاح (كل الأعيرة)
+  const totalWeight = inventory.filter(i=>i.status==='available').reduce((s,i)=> s + (i.netW||0), 0);
+  document.getElementById('kpiInventoryWeight').textContent = totalWeight.toLocaleString('ar-EG',{maximumFractionDigits:1}) + ' جم';
+
+  // رصيد الخزنة
+  const safeBalance = safe.reduce((s,t)=> s + (t.type==='income'? t.amount : -t.amount), 0);
+  document.getElementById('kpiSafeBalance').textContent = fmtMoney(safeBalance) + ' ج.م';
+
+  // مبيعات وفواتير اليوم / أمس
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  const yesterdayStart = new Date(todayStart.getTime() - 86400000);
+  const todayInvoices = invoices.filter(inv => inv.at >= todayStart.getTime());
+  const yesterdayInvoices = invoices.filter(inv => inv.at >= yesterdayStart.getTime() && inv.at < todayStart.getTime());
+
+  const todaySales = todayInvoices.reduce((s,inv)=> s + (inv.grand||0), 0);
+  const yesterdaySales = yesterdayInvoices.reduce((s,inv)=> s + (inv.grand||0), 0);
+
+  document.getElementById('kpiSalesToday').textContent = fmtMoney(todaySales) + ' ج.م';
+  document.getElementById('kpiInvoicesToday').textContent = todayInvoices.length + ' فاتورة';
+
+  const deltaEl = document.getElementById('kpiSalesDelta');
+  if(yesterdaySales > 0){
+    const pct = ((todaySales - yesterdaySales) / yesterdaySales) * 100;
+    const up = pct >= 0;
+    deltaEl.style.color = up ? 'var(--green)' : 'var(--red)';
+    deltaEl.textContent = (up ? '▲ ' : '▼ ') + Math.abs(pct).toFixed(0) + '% عن أمس';
+  } else if(todaySales > 0){
+    deltaEl.style.color = 'var(--green)';
+    deltaEl.textContent = '▲ أول مبيعات مسجلة';
+  } else {
+    deltaEl.style.color = 'var(--muted)';
+    deltaEl.textContent = 'لا توجد مبيعات اليوم بعد';
+  }
+
+  // أعلى عيار مبيعاً اليوم (حسب الوزن المباع)
+  const karatWeights = {};
+  todayInvoices.forEach(inv => (inv.items||[]).forEach(it => {
+    karatWeights[it.karat] = (karatWeights[it.karat]||0) + (it.netW||0);
+  }));
+  const topKaratEl = document.getElementById('kpiTopKarat');
+  const topKaratEntry = Object.entries(karatWeights).sort((a,b)=>b[1]-a[1])[0];
+  topKaratEl.textContent = topKaratEntry ? ('أعلى مبيعًا: عيار ' + topKaratEntry[0]) : 'لا توجد فواتير بعد';
+}
+loadRealKpis();
+
 /* ===== ticker data (duplicated once for seamless loop) ===== */
 const tickItems = [
   {k:'عيار 24', v:'٤٤٠٠ ج.م', chip:'up', chipv:'+0.6%'},
