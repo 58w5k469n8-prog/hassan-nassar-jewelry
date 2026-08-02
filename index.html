@@ -254,9 +254,11 @@ async function submitAuth(){
       const cred = await fbAuth.createUserWithEmailAndPassword(email, password);
       await fbDb.collection('accounts').doc(cred.user.uid).set({
         name, phone, createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        lastLogin: firebase.firestore.FieldValue.serverTimestamp(), disabled: false
+        lastLogin: null, disabled: true
       });
-      await onAuthedProfileOk();
+      await fbAuth.signOut();
+      authInProgress = false;
+      showAuthError('تم إنشاء الحساب بنجاح. لازم صاحب المحل يفعّل الحساب أولاً قبل ما تقدر تدخل — تواصل معه.');
     }else{
       const cred = await fbAuth.signInWithEmailAndPassword(email, password);
       await checkProfileAndEnter(cred.user);
