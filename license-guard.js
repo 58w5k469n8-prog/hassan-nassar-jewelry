@@ -12,11 +12,15 @@ const firebaseConfig = {
   measurementId: "G-E939CTWF3W"
 };
 
+// 1. تهيئة تطبيق Firebase
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 
+// 2. تفعيل الخدمات المطلوب استخدامها
 const db = firebase.firestore();
+const auth = firebase.auth(); // <-- إضافة تفعيل الـ Auth لربط الـ API Key به
+
 const LICENSE_ID = "2NbYSgAPmg9HysgoDt1l";
 
 function getDeviceId() {
