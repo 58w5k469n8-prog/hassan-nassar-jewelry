@@ -68,7 +68,38 @@
 <body>
 <div class="ambient"></div>
 
-<div class="setup-gate" id="gateScreen">
+<div class="setup-gate" id="loginScreen">
+  <div class="setup-card glass">
+    <div class="mark" style="width:44px;height:44px;border-radius:13px;background:linear-gradient(145deg,var(--gold-1),var(--gold-2));display:flex;align-items:center;justify-content:center;font-weight:700;color:#151007;font-size:15px;margin:0 auto 14px;">HN</div>
+    <h1 id="authTitle" style="font-size:18px;margin-bottom:6px;">تسجيل الدخول</h1>
+    <p style="color:var(--muted);font-size:12.5px;margin-bottom:20px;">مجوهرات حسن نصار — الدخول برقم الهاتف</p>
+
+    <div id="authError" style="display:none;color:var(--red);font-size:12.5px;background:rgba(255,105,97,0.1);border:1px solid rgba(255,105,97,0.25);border-radius:10px;padding:8px 12px;margin-bottom:14px;"></div>
+
+    <div id="regNameWrap" style="display:none;text-align:right;margin-bottom:10px;">
+      <label style="font-size:12px;color:var(--muted);">الاسم</label>
+      <input type="text" id="authName" placeholder="اسمك" style="width:100%;padding:11px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--cream);margin-top:4px;">
+    </div>
+
+    <div style="text-align:right;margin-bottom:10px;">
+      <label style="font-size:12px;color:var(--muted);">رقم الهاتف</label>
+      <input type="tel" id="authPhone" placeholder="01xxxxxxxxx" style="width:100%;padding:11px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--cream);margin-top:4px;direction:ltr;text-align:right;">
+    </div>
+
+    <div style="text-align:right;margin-bottom:16px;">
+      <label style="font-size:12px;color:var(--muted);">كلمة السر</label>
+      <input type="password" id="authPassword" placeholder="••••••••" style="width:100%;padding:11px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--cream);margin-top:4px;">
+    </div>
+
+    <button class="btn btn-gold" style="width:100%;" id="authSubmitBtn" onclick="submitAuth()">تسجيل الدخول</button>
+    <p style="color:var(--muted);font-size:12px;margin-top:14px;">
+      <span id="authSwitchLabel">لسه معملتش حساب؟</span>
+      <a href="#" onclick="toggleAuthMode();return false;" style="color:var(--gold-1);" id="authSwitchLink">إنشاء حساب جديد</a>
+    </p>
+  </div>
+</div>
+
+<div class="setup-gate" id="gateScreen" style="display:none;">
   <div class="setup-card glass">
     <h1 style="font-size:18px;margin-bottom:10px;">الاتصال بقاعدة بيانات المحل</h1>
     <p style="color:var(--muted);font-size:13px;margin-bottom:20px;">اختر مجلد "مجوهرات حسن نصار" لعرض سعر الذهب الموحّد في الشريط العلوي.</p>
@@ -98,6 +129,7 @@
     <a href="hassan-nassar-jewelry-08-finance-final.html"><div class="nav-item"><span class="ic">🖥️</span> شاشة العميل والشهادات</div></a>
     <a href="hassan-nassar-jewelry-06-settings-users.html"><div class="nav-item"><span class="ic">⚙️</span> الإعدادات والمستخدمين</div></a>
     <a href="hassan-nassar-jewelry-06-settings-users.html"><div class="nav-item"><span class="ic">ℹ️</span> عن المطور</div></a>
+    <div class="nav-item" onclick="logoutAccount()" style="cursor:pointer;color:var(--red);"><span class="ic">🚪</span> تسجيل الخروج</div>
   </div>
 
   <div class="main">
@@ -123,6 +155,9 @@
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 <script>
 function idbOpen(){ return new Promise((res,rej)=>{ const r=indexedDB.open('hn_db_meta',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
 async function idbGet(k){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction('kv','readonly'); const rq=tx.objectStore('kv').get(k); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error); }); }
@@ -163,6 +198,106 @@ const DB = {
   }
 };
 
+/* ===== ACCOUNTS: PHONE + PASSWORD LOGIN (Firebase Auth, free Spark plan — no SMS) ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyAQMlFvEzLXxUKYbScldvKTHKQEk4PpN4",
+  authDomain: "hassan-nassar-license.firebaseapp.com",
+  projectId: "hassan-nassar-license",
+  storageBucket: "hassan-nassar-license.firebasestorage.app",
+  messagingSenderId: "381313051649",
+  appId: "1:381313051649:web:ef6e6667f691848c3c6400",
+  measurementId: "G-E939CTWF3W"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const fbAuth = firebase.auth();
+const fbDb = firebase.firestore();
+
+let authMode = 'login'; // 'login' | 'register'
+let authInProgress = false; // guards against onAuthStateChanged double-firing during submitAuth
+
+function phoneToEmail(phone){
+  const digits = phone.replace(/\D/g,'');
+  return digits + '@hn-jewelry.app';
+}
+function showAuthError(msg){
+  const el = document.getElementById('authError');
+  el.textContent = msg; el.style.display = 'block';
+}
+function clearAuthError(){
+  document.getElementById('authError').style.display = 'none';
+}
+
+function toggleAuthMode(){
+  authMode = authMode === 'login' ? 'register' : 'login';
+  clearAuthError();
+  document.getElementById('regNameWrap').style.display = authMode === 'register' ? 'block' : 'none';
+  document.getElementById('authTitle').textContent = authMode === 'register' ? 'إنشاء حساب جديد' : 'تسجيل الدخول';
+  document.getElementById('authSubmitBtn').textContent = authMode === 'register' ? 'إنشاء الحساب' : 'تسجيل الدخول';
+  document.getElementById('authSwitchLabel').textContent = authMode === 'register' ? 'عندك حساب بالفعل؟' : 'لسه معملتش حساب؟';
+  document.getElementById('authSwitchLink').textContent = authMode === 'register' ? 'تسجيل الدخول' : 'إنشاء حساب جديد';
+}
+
+async function submitAuth(){
+  clearAuthError();
+  const phone = document.getElementById('authPhone').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const name = document.getElementById('authName').value.trim();
+
+  if(!phone || !password){ showAuthError('من فضلك اكتب رقم الهاتف وكلمة السر'); return; }
+  if(authMode === 'register' && !name){ showAuthError('من فضلك اكتب الاسم'); return; }
+  if(password.length < 6){ showAuthError('كلمة السر لازم تكون 6 حروف/أرقام على الأقل'); return; }
+
+  const email = phoneToEmail(phone);
+  authInProgress = true;
+  try{
+    if(authMode === 'register'){
+      const cred = await fbAuth.createUserWithEmailAndPassword(email, password);
+      await fbDb.collection('accounts').doc(cred.user.uid).set({
+        name, phone, createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        lastLogin: firebase.firestore.FieldValue.serverTimestamp(), disabled: false
+      });
+      await onAuthedProfileOk();
+    }else{
+      const cred = await fbAuth.signInWithEmailAndPassword(email, password);
+      await checkProfileAndEnter(cred.user);
+    }
+  }catch(e){
+    authInProgress = false;
+    const map = {
+      'auth/user-not-found':'لا يوجد حساب بهذا الرقم — جرب إنشاء حساب جديد',
+      'auth/wrong-password':'كلمة السر غير صحيحة',
+      'auth/email-already-in-use':'يوجد حساب مسجل بهذا الرقم بالفعل',
+      'auth/invalid-email':'رقم الهاتف غير صالح',
+      'auth/weak-password':'كلمة السر ضعيفة جداً'
+    };
+    showAuthError(map[e.code] || 'حدث خطأ: تأكد من الاتصال بالإنترنت وحاول مرة أخرى');
+  }
+}
+
+async function checkProfileAndEnter(user){
+  const doc = await fbDb.collection('accounts').doc(user.uid).get();
+  if(!doc.exists || doc.data().disabled === true){
+    await fbAuth.signOut();
+    authInProgress = false;
+    showAuthError('هذا الحساب غير متاح للدخول. يرجى التواصل مع الإدارة.');
+    return;
+  }
+  await fbDb.collection('accounts').doc(user.uid).update({ lastLogin: firebase.firestore.FieldValue.serverTimestamp() });
+  authInProgress = false;
+  await onAuthedProfileOk();
+}
+
+async function onAuthedProfileOk(){
+  authInProgress = false;
+  document.getElementById('loginScreen').style.display = 'none';
+  await enterAppAfterLogin();
+}
+
+async function logoutAccount(){
+  await fbAuth.signOut();
+  location.reload();
+}
+
 async function afterConnect(){
   document.getElementById('gateScreen').style.display='none';
   document.getElementById('appScreen').style.display='flex';
@@ -189,7 +324,7 @@ function skipGate(){
   document.getElementById('appScreen').style.display='flex';
   document.getElementById('tickerTrack').innerHTML = '<div class="tick-item"><span class="k">اختر وحدة من القائمة للبدء</span></div>';
 }
-(async function boot(){
+async function enterAppAfterLogin(){
   // First-time visitors (no completed setup/license yet) go straight to the setup screen.
   try{
     const setup = JSON.parse(localStorage.getItem('hn_jewelry_setup_v1') || 'null');
@@ -198,7 +333,18 @@ function skipGate(){
       return;
     }
   }catch(e){}
+  document.getElementById('gateScreen').style.display='flex';
   const ok = await DB.tryAutoConnect(); if(ok) afterConnect();
+}
+
+(function boot(){
+  fbAuth.onAuthStateChanged(async (user)=>{
+    if(authInProgress) return; // submitAuth() is already handling this transition
+    if(user){
+      await checkProfileAndEnter(user);
+    }
+    // if not logged in, loginScreen (shown by default) stays visible
+  });
 })();
 </script>
 </body>
