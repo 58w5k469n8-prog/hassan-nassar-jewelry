@@ -75,24 +75,6 @@
   .setup-card{ max-width:440px; width:100%; padding:32px; text-align:center; }
 
   @media (max-width:800px){ .grid2{ grid-template-columns:1fr; } }
-  /* ===== Hassan Nassar Quick Nav (floating) ===== */
-  .hn-qn{ position:fixed; top:16px; left:16px; z-index:999; }
-  .hn-qn-btn{ display:flex; align-items:center; gap:8px; padding:10px 16px; border-radius:100px; border:none; cursor:pointer;
-    background:var(--liquid-glass); backdrop-filter:blur(25px) saturate(140%); -webkit-backdrop-filter:blur(25px) saturate(140%);
-    border:1px solid var(--glass-border); color:var(--cream); font-size:12.5px; font-weight:700;
-    box-shadow:0 10px 30px rgba(0,0,0,0.4); transition:transform .18s var(--ease); }
-  .hn-qn-btn:hover{ transform:translateY(-2px); }
-  .hn-qn-btn:active{ transform:scale(.96); }
-  .hn-qn-dot{ width:8px; height:8px; border-radius:50%; background:var(--gold-1); box-shadow:0 0 8px var(--gold-1); }
-  .hn-qn-menu{ position:absolute; top:calc(100% + 8px); left:0; min-width:240px; padding:8px; border-radius:16px;
-    background:var(--liquid-glass); backdrop-filter:blur(25px) saturate(140%); -webkit-backdrop-filter:blur(25px) saturate(140%);
-    border:1px solid var(--glass-border); box-shadow:0 20px 50px rgba(0,0,0,0.5);
-    display:none; flex-direction:column; gap:2px; }
-  .hn-qn.open .hn-qn-menu{ display:flex; }
-  .hn-qn-menu a{ display:block; padding:10px 12px; border-radius:10px; color:var(--cream); text-decoration:none; font-size:13px; transition:background .15s; }
-  .hn-qn-menu a:hover{ background:rgba(255,255,255,0.06); color:var(--gold-1); }
-  @media(max-width:640px){ .hn-qn{ top:10px; left:10px; } .hn-qn-btn{ padding:9px 13px; font-size:11.5px; } }
-
 </style>
 
 <!-- Firebase & License Guard -->
@@ -102,22 +84,6 @@
 
 </head>
 <body>
-<div class="hn-qn" id="hnQuickNav">
-  <button class="hn-qn-btn" onclick="document.getElementById('hnQuickNav').classList.toggle('open')" aria-label="القائمة">
-    <span class="hn-qn-dot"></span> القائمة
-  </button>
-  <div class="hn-qn-menu">
-    <a href="index.html">🏠 الرئيسية</a>
-    <a href="hassan-nassar-jewelry-02-dashboard.html">📈 لوحة التحكم</a>
-    <a href="hassan-nassar-jewelry-04-invoice.html">🧾 فاتورة بيع جديدة</a>
-    <a href="hassan-nassar-jewelry-03-data-core.html">📦 المخزون · العملاء · الموردين</a>
-    <a href="hassan-nassar-jewelry-05-barcode-reports.html">🖨️ الباركود والتقارير</a>
-    <a href="hassan-nassar-jewelry-06-settings-users.html">⚙️ الإعدادات والمستخدمين</a>
-    <a href="hassan-nassar-jewelry-07-transactions.html">♻️ الكسر والاسترجاع والحجز</a>
-    <a href="hassan-nassar-jewelry-08-finance-final.html">💵 المصروفات والمقاصة</a>
-  </div>
-</div>
-
 <div class="ambient"></div>
 <div id="toast"></div>
 
@@ -210,6 +176,34 @@
       <div class="about-row"><span>رقم الهاتف</span><span>+201061947000</span></div>
       <div class="about-row"><span>البريد الإلكتروني</span><span>Abdullah.farouq87@icloud.com</span></div>
       <div class="about-row"><span>إصدار النظام</span><span>v0.5 (قيد البناء)</span></div>
+    </div>
+
+    <!-- ================= DEVELOPER DANGER ZONE ================= -->
+    <div class="card glass" style="max-width:520px;margin:24px auto 0;border:1px solid rgba(255,105,97,0.35);">
+      <h2 style="color:#FF9791;">⚠️ منطقة الخطر — مسح البيانات</h2>
+      <p style="color:var(--muted);font-size:12.5px;margin-bottom:16px;">هذا القسم للمطور فقط. المسح نهائي ولا يمكن التراجع عنه بعد التنفيذ.</p>
+
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);">
+        <input type="checkbox" id="wipeAll" onchange="toggleWipeAll(this.checked)" style="width:16px;height:16px;">
+        <label for="wipeAll" style="font-weight:700;font-size:13px;">تحديد كل الأقسام</label>
+      </div>
+
+      <div id="wipeSections" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" class="wipeItem" value="inventory">📦 المخزون</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" class="wipeItem" value="customers">👥 العملاء</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" class="wipeItem" value="suppliers">🚚 الموردين</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" class="wipeItem" value="safe">💰 الخزنة</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" class="wipeItem" value="goldsmiths,goldsmith_tx">🔨 الصاغة وحساباتهم</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" class="wipeItem" value="invoices">🧾 الفواتير</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" class="wipeItem" value="layaway,old_gold,repairs,returns">🔄 الحركات (حجز/كسر/تصليح/مرتجع)</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" class="wipeItem" value="credit_ledger,opex,workshop_loss">📊 الحسابات المالية (آجل/مصروفات/فاقد)</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" class="wipeItem" value="audit_log">📜 سجل العمليات</label>
+      </div>
+
+      <label style="font-size:12.5px;color:var(--muted);">كلمة سر المطور</label>
+      <input type="password" id="devWipePassword" placeholder="••••••••" style="margin-bottom:12px;">
+
+      <button class="btn btn-danger" style="width:100%;" onclick="confirmWipeData()">🗑️ مسح الأقسام المحددة</button>
     </div>
   </div>
 </div>
@@ -382,6 +376,54 @@ function renderAudit(){
     <td>${a.desc}</td><td style="color:var(--muted);">${a.by}</td>
     <td style="color:var(--muted);">${new Date(a.at).toLocaleString('ar-EG')}</td></tr>
   `).join('');
+}
+
+/* ===== DEVELOPER DANGER ZONE: DATA WIPE ===== */
+const DEV_WIPE_PASSWORD = '@#AbdullahFdmra132013';
+
+function toggleWipeAll(checked){
+  document.querySelectorAll('.wipeItem').forEach(cb => cb.checked = checked);
+}
+
+async function confirmWipeData(){
+  const password = document.getElementById('devWipePassword').value;
+  if(password !== DEV_WIPE_PASSWORD){
+    showToast('كلمة سر المطور غير صحيحة');
+    return;
+  }
+
+  const checked = Array.from(document.querySelectorAll('.wipeItem:checked'));
+  if(checked.length === 0){
+    showToast('اختر قسم واحد على الأقل للمسح');
+    return;
+  }
+
+  const labels = checked.map(cb => cb.closest('label').textContent.trim());
+  const step1 = confirm('تحذير: سيتم مسح البيانات نهائياً لهذه الأقسام:\n\n' + labels.join('\n') + '\n\nهذا الإجراء لا يمكن التراجع عنه. هل أنت متأكد؟');
+  if(!step1) return;
+  const step2 = confirm('تأكيد أخير: هل تريد فعلاً المسح الآن؟ لن تتمكن من استرجاع البيانات بعد هذه الخطوة.');
+  if(!step2) return;
+
+  // collect every storage key across all selected sections
+  const keys = [];
+  checked.forEach(cb => cb.value.split(',').forEach(k => keys.push(k.trim())));
+
+  for(const key of keys){
+    await DB.write(key, []);
+  }
+
+  // reset in-memory audit log state if it was part of the wipe, then log the wipe itself
+  if(keys.includes('audit_log')){
+    AUDIT = [];
+  }
+  await logAudit('delete', 'مسح بيانات (المطور): ' + labels.join('، '), 'المطور');
+
+  document.getElementById('devWipePassword').value = '';
+  document.getElementById('wipeAll').checked = false;
+  document.querySelectorAll('.wipeItem').forEach(cb => cb.checked = false);
+
+  showToast('تم مسح الأقسام المحددة بنجاح');
+  setTimeout(() => location.reload(), 1200);
 }
 </script>
 </body>
