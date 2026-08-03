@@ -3,7 +3,7 @@
 // ==========================================
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAQMlFvEzLXxUKYbScldvKTHKQEk4PpN4",
+  apiKey: "AIzaSyAQMILfvEzLXxUKYbScldvKTHKQEk4PpN4",
   authDomain: "hassan-nassar-license.firebaseapp.com",
   projectId: "hassan-nassar-license",
   storageBucket: "hassan-nassar-license.firebasestorage.app",
