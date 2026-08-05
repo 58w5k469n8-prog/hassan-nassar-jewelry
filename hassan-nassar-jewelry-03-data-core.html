@@ -110,6 +110,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="license-guard.js"></script>
+<script src="firestore-db.js"></script>
 
   <!-- قراءة الباركود من الكاميرا -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
@@ -119,6 +120,30 @@
   <script src="google-drive-config.js"></script>
 </head>
 <body>
+<div id="hnGlobalNav" style="display:flex;align-items:center;gap:2px;padding:9px 14px;background:#0c0c0e;border-bottom:1px solid rgba(255,255,255,0.08);overflow-x:auto;white-space:nowrap;position:sticky;top:0;z-index:9997;direction:rtl;font-family:inherit;">
+  <a href="index.html" style="display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#F5D060;font-weight:700;font-size:12.5px;padding:7px 12px;margin-left:8px;">🏠 الرئيسية</a>
+  <a href="hassan-nassar-jewelry-02-dashboard.html" class="hnNavLink">📊 الداشبورد</a>
+  <a href="hassan-nassar-jewelry-03-data-core.html" class="hnNavLink">📦 المخزون والخزنة</a>
+  <a href="hassan-nassar-jewelry-04-invoice.html" class="hnNavLink">🧾 الفواتير</a>
+  <a href="hassan-nassar-jewelry-05-barcode-reports.html" class="hnNavLink">🏷️ الباركود والتقارير</a>
+  <a href="hassan-nassar-jewelry-07-transactions.html" class="hnNavLink">🔄 الحركات</a>
+  <a href="hassan-nassar-jewelry-08-finance-final.html" class="hnNavLink">💵 الحسابات المالية</a>
+  <a href="hassan-nassar-jewelry-06-settings-users.html" class="hnNavLink">⚙️ الإعدادات</a>
+</div>
+<style>
+  .hnNavLink{ display:inline-flex; align-items:center; gap:5px; text-decoration:none; color:#B8B8BE; font-size:12.5px; padding:7px 12px; border-radius:10px; margin-left:2px; }
+  .hnNavLink:hover{ background:rgba(255,255,255,0.06); color:#F5F5F7; }
+  .hnNavLink.active{ background:rgba(212,175,55,0.15); color:#F5D060; font-weight:700; }
+</style>
+<script>
+(function(){
+  var page = location.pathname.split('/').pop();
+  document.querySelectorAll('.hnNavLink').forEach(function(a){
+    if(a.getAttribute('href') === page) a.classList.add('active');
+  });
+})();
+</script>
+
 <div class="hn-qn" id="hnQuickNav">
   <button class="hn-qn-btn" onclick="document.getElementById('hnQuickNav').classList.toggle('open')" aria-label="القائمة">
     <span class="hn-qn-dot"></span> القائمة
@@ -138,15 +163,15 @@
 <div class="ambient"></div>
 <div id="toast"></div>
 
-<!-- ===== GATE: connect / pick storage folder ===== -->
+<!-- ===== Optional local backup folder ===== -->
 <div class="setup-gate" id="gateScreen">
   <div class="setup-card glass">
     <div class="mark">HN</div>
-    <h1 style="font-size:19px;margin-bottom:8px;">الاتصال بقاعدة بيانات المحل</h1>
+    <h1 style="font-size:19px;margin-bottom:8px;">جاري تحميل بيانات المحل...</h1>
     <p style="color:var(--muted);font-size:13px;line-height:1.8;margin-bottom:22px;">
-      لتشغيل هذه الوحدة، اختر مجلد التخزين على جهازك (نفس المجلد الذي حددته عند التأسيس). سيتم إنشاء فولدر باسم "مجوهرات حسن نصار" بداخله تلقائياً، وستُحفظ كل بيانات المخزون والعملاء والخزنة بداخله فوراً مع كل عملية.
+      البيانات دلوقتي متزامنة لايف على السيرفر، ومش محتاجة أي خطوة اتصال. تقدر اختيارياً تحدد مجلد نسخة احتياطية على جهازك — هيتحفظ فيه نسخة من كل عملية أول بأول.
     </p>
-    <button class="btn btn-gold" style="width:100%;" onclick="DB.pickFolder().then(afterConnect)">📁 اختيار / إعادة الاتصال بمجلد البيانات</button>
+    <button class="btn btn-gold" style="width:100%;" onclick="DB.pickFolder().then(afterConnect)">📁 تحديد مجلد نسخة احتياطية (اختياري)</button>
     <p style="color:var(--muted);font-size:11px;margin-top:14px;">يعمل بكامل قوته على Chrome / Edge. المتصفحات الأخرى تستخدم تخزينًا داخليًا محميًا بديلاً تلقائياً.</p>
   </div>
 </div>
@@ -193,8 +218,22 @@
           <input id="invCode" placeholder="HN000000001" style="flex:1;">
           <button type="button" class="btn btn-ghost" style="width:auto; padding:0 14px; margin-bottom:12px;" title="مسح الباركود بالكاميرا" onclick="scanInventoryBarcode()">📷</button>
         </div>
-        <label>العيار</label>
-        <select id="invKarat"><option>24</option><option selected>21</option><option>18</option><option>14</option><option>12</option><option>9</option></select>
+        <label>المعدن والعيار</label>
+        <select id="invKarat">
+          <optgroup label="🟡 ذهب">
+            <option value="24">عيار 24</option>
+            <option value="21" selected>عيار 21</option>
+            <option value="18">عيار 18</option>
+            <option value="14">عيار 14</option>
+            <option value="12">عيار 12</option>
+            <option value="9">عيار 9</option>
+          </optgroup>
+          <optgroup label="⚪ فضة">
+            <option value="999">فضة 999</option>
+            <option value="925">فضة 925</option>
+            <option value="800">فضة 800</option>
+          </optgroup>
+        </select>
         <label>الوزن الصافي (جرام)</label><input id="invNetWeight" type="number" step="0.01" placeholder="0.00">
         <label>الوزن القائم (مع الفصوص، اختياري)</label><input id="invGrossWeight" type="number" step="0.01" placeholder="0.00">
         <label>مصنعية البيع للجرام (للمستهلك)</label><input id="invFeeRetail" type="number" step="0.01" placeholder="0.00">
@@ -322,119 +361,8 @@
 </div>
 
 <script>
-/* =========================================================
-   TINY INDEXEDDB KEY-VALUE STORE
-   (used only to remember the chosen folder handle / fallback data)
-========================================================= */
-function idbOpen(){
-  return new Promise((resolve,reject)=>{
-    const req = indexedDB.open('hn_db_meta', 1);
-    req.onupgradeneeded = () => req.result.createObjectStore('kv');
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-async function idbGet(key){
-  const db = await idbOpen();
-  return new Promise((resolve,reject)=>{
-    const tx = db.transaction('kv','readonly');
-    const r = tx.objectStore('kv').get(key);
-    r.onsuccess = () => resolve(r.result);
-    r.onerror = () => reject(r.error);
-  });
-}
-async function idbSet(key, val){
-  const db = await idbOpen();
-  return new Promise((resolve,reject)=>{
-    const tx = db.transaction('kv','readwrite');
-    tx.objectStore('kv').put(val, key);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
-/* =========================================================
-   REAL LOCAL DATABASE ENGINE
-   Writes one JSON file per collection inside a folder named
-   after the shop, on the user's actual drive (File System Access API).
-   Falls back to IndexedDB-backed storage on browsers without support
-   (e.g. Safari) so the app keeps working either way.
-========================================================= */
-const SHOP_NAME = 'مجوهرات حسن نصار';
-const DB = {
-  supported: 'showDirectoryPicker' in window,
-  dirHandle: null,
-  shopHandle: null,
-  connected: false,
-
-  async tryAutoConnect(){
-    if(!this.supported) { this.connected = true; return true; } // fallback mode always "connected"
-    try{
-      const handle = await idbGet('rootDirHandle');
-      if(!handle) return false;
-      const perm = await handle.queryPermission({mode:'readwrite'});
-      if(perm !== 'granted'){
-        const req = await handle.requestPermission({mode:'readwrite'});
-        if(req !== 'granted') return false;
-      }
-      this.dirHandle = handle;
-      this.shopHandle = await this.dirHandle.getDirectoryHandle(SHOP_NAME, {create:true});
-      this.connected = true;
-      return true;
-    }catch(e){ return false; }
-  },
-
-  async pickFolder(){
-    if(!this.supported){
-      this.connected = true;
-      showToast('هذا المتصفح لا يدعم اختيار مجلد مباشر — سيتم استخدام تخزين داخلي محمي بديل تلقائياً.');
-      return;
-    }
-    // أولاً: لو سبق اختيار مجلد من أي صفحة تانية في النظام، حاول إعادة الاتصال
-    // بنفس المجلد فوراً (مجرد إذن، من غير ما تفتح نافذة اختيار مجلد تانية).
-    try{
-      const saved = await idbGet('rootDirHandle');
-      if(saved){
-        const perm = await saved.requestPermission({mode:'readwrite'});
-        if(perm === 'granted'){
-          this.dirHandle = saved;
-          this.shopHandle = await this.dirHandle.getDirectoryHandle(SHOP_NAME, {create:true});
-          this.connected = true;
-          return;
-        }
-      }
-    }catch(e){ /* تجاهل وكمّل لاختيار مجلد جديد */ }
-
-    this.dirHandle = await window.showDirectoryPicker({mode:'readwrite'});
-    await idbSet('rootDirHandle', this.dirHandle);
-    this.shopHandle = await this.dirHandle.getDirectoryHandle(SHOP_NAME, {create:true});
-    this.connected = true;
-  },
-
-  async read(collection, fallback){
-    if(this.supported && this.shopHandle){
-      try{
-        const fh = await this.shopHandle.getFileHandle(collection + '.json');
-        const file = await fh.getFile();
-        return JSON.parse(await file.text());
-      }catch(e){ return fallback; }
-    }
-    // fallback: IndexedDB
-    const v = await idbGet('fallback_' + collection);
-    return v !== undefined ? v : fallback;
-  },
-
-  async write(collection, data){
-    if(this.supported && this.shopHandle){
-      const fh = await this.shopHandle.getFileHandle(collection + '.json', {create:true});
-      const writable = await fh.createWritable();
-      await writable.write(JSON.stringify(data, null, 2));
-      await writable.close();
-      return;
-    }
-    await idbSet('fallback_' + collection, data);
-  }
-};
+/* DB engine now comes from firestore-db.js (loaded in <head>) — shared live data for every user.
+   DB.pickFolder() still works here as an OPTIONAL local backup-folder chooser (not required to connect). */
 
 function showToast(msg){
   const t = document.getElementById('toast');
@@ -484,11 +412,13 @@ document.querySelectorAll('.tab').forEach(t=>{
 /* =========================================================
    INVENTORY
 ========================================================= */
-const KARATS = [24,21,18,14,12,9];
+const KARATS = [24,21,18,14,12,9,999,925,800];
+function isSilver(k){ return k >= 800; }
+function karatLabel(k){ return isSilver(k) ? ('فضة ' + k) : ('عيار ' + k); }
 let activeKarat = 21;
 function renderKaratTabs(){
   const wrap = document.getElementById('karatTabs');
-  wrap.innerHTML = KARATS.map(k=>`<div class="karat-pill ${k===activeKarat?'active':''}" onclick="setKarat(${k})">عيار ${k}</div>`).join('');
+  wrap.innerHTML = KARATS.map(k=>`<div class="karat-pill ${k===activeKarat?'active':''}" style="${isSilver(k)?'border-color:rgba(200,200,210,0.35);':''}" onclick="setKarat(${k})">${karatLabel(k)}</div>`).join('');
 }
 function setKarat(k){ activeKarat = k; renderKaratTabs(); renderInventory(); }
 
