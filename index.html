@@ -179,9 +179,15 @@
   </div>
 </div>
 
+<!-- تحميل حزم Firebase الأساسية -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+<!-- استدعاء ملف الترخيص أولاً لإجراء الفحص والحظر قبل تنفيذ بقية السكربتات -->
+<script src="license-guard.js"></script>
+
+<!-- باقي السكربتات الخاصة بالـ DB والنظام -->
 <script src="firestore-db.js"></script>
 <script>
 function idbOpen(){ return new Promise((res,rej)=>{ const r=indexedDB.open('hn_db_meta',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
@@ -223,17 +229,7 @@ const DB = {
   }
 };
 
-/* ===== ACCOUNTS: PHONE + PASSWORD LOGIN (Firebase Auth, free Spark plan — no SMS) ===== */
-const firebaseConfig = {
-  apiKey: "AIzaSyAQMILfvEzLXxUKYbScldvKTHKQEk4PpN4",
-  authDomain: "hassan-nassar-license.firebaseapp.com",
-  projectId: "hassan-nassar-license",
-  storageBucket: "hassan-nassar-license.firebasestorage.app",
-  messagingSenderId: "381313051649",
-  appId: "1:381313051649:web:ef6e6667f691848c3c6400",
-  measurementId: "G-E939CTWF3W"
-};
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+/* ===== ACCOUNTS: PHONE + PASSWORD LOGIN ===== */
 const fbAuth = firebase.auth();
 const fbDb = firebase.firestore();
 
@@ -355,7 +351,6 @@ function skipGate(){
   document.getElementById('tickerTrack').innerHTML = '<div class="tick-item"><span class="k">اختر وحدة من القائمة للبدء</span></div>';
 }
 async function enterAppAfterLogin(){
-  // First-time visitors (no completed setup/license yet) go straight to the setup screen.
   try{
     const setup = JSON.parse(localStorage.getItem('hn_jewelry_setup_v1') || 'null');
     if(!setup || !setup.license || !setup.owner){
@@ -369,11 +364,10 @@ async function enterAppAfterLogin(){
 
 (function boot(){
   fbAuth.onAuthStateChanged(async (user)=>{
-    if(authInProgress) return; // submitAuth() is already handling this transition
+    if(authInProgress) return; 
     if(user){
       await checkProfileAndEnter(user);
     }
-    // if not logged in, loginScreen (shown by default) stays visible
   });
 })();
 </script>
