@@ -12,15 +12,11 @@ const firebaseConfig = {
   measurementId: "G-E939CTWF3W"
 };
 
-// 1. تهيئة تطبيق Firebase
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 
-// 2. تفعيل الخدمات المطلوب استخدامها
 const db = firebase.firestore();
-const auth = firebase.auth(); // <-- إضافة تفعيل الـ Auth لربط الـ API Key به
-
 const LICENSE_ID = "2NbYSgAPmg9HysgoDt1l";
 
 function getDeviceId() {
@@ -35,10 +31,10 @@ function getDeviceId() {
 async function checkLicenseGuard() {
   try {
     const doc = await db.collection("licenses").doc(LICENSE_ID).get();
-    
+
     if (doc.exists) {
       const data = doc.data();
-      
+
       // 1. التحقق من التفعيل العام للنظام
       if (data.active !== true) {
         blockUnauthorizedUser("الترخيص غير مفعل أو منتهي الصلاحية. يرجى التواصل مع المسؤول.");
@@ -48,7 +44,7 @@ async function checkLicenseGuard() {
       // 2. التحقق من حالة الجهاز المحدد
       const deviceId = getDeviceId();
       const deviceDoc = await db.collection("licenses").doc(LICENSE_ID).collection("devices").doc(deviceId).get();
-      
+
       if (deviceDoc.exists && deviceDoc.data().blocked === true) {
         blockUnauthorizedUser("تم حظر هذا الجهاز من الدخول للنظام. يرجى التواصل مع الادارة.");
         return;
@@ -58,7 +54,7 @@ async function checkLicenseGuard() {
       trackDeviceSession();
       return;
     }
-    
+
     blockUnauthorizedUser("بيانات الترخيص غير صحيحة.");
   } catch (error) {
     console.error("خطأ في التحقق من الترخيص:", error);
