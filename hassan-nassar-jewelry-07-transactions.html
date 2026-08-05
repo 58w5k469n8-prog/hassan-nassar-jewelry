@@ -90,9 +90,34 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 <script src="license-guard.js"></script>
+<script src="firestore-db.js"></script>
 
 </head>
 <body>
+<div id="hnGlobalNav" style="display:flex;align-items:center;gap:2px;padding:9px 14px;background:#0c0c0e;border-bottom:1px solid rgba(255,255,255,0.08);overflow-x:auto;white-space:nowrap;position:sticky;top:0;z-index:9997;direction:rtl;font-family:inherit;">
+  <a href="index.html" style="display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#F5D060;font-weight:700;font-size:12.5px;padding:7px 12px;margin-left:8px;">🏠 الرئيسية</a>
+  <a href="hassan-nassar-jewelry-02-dashboard.html" class="hnNavLink">📊 الداشبورد</a>
+  <a href="hassan-nassar-jewelry-03-data-core.html" class="hnNavLink">📦 المخزون والخزنة</a>
+  <a href="hassan-nassar-jewelry-04-invoice.html" class="hnNavLink">🧾 الفواتير</a>
+  <a href="hassan-nassar-jewelry-05-barcode-reports.html" class="hnNavLink">🏷️ الباركود والتقارير</a>
+  <a href="hassan-nassar-jewelry-07-transactions.html" class="hnNavLink">🔄 الحركات</a>
+  <a href="hassan-nassar-jewelry-08-finance-final.html" class="hnNavLink">💵 الحسابات المالية</a>
+  <a href="hassan-nassar-jewelry-06-settings-users.html" class="hnNavLink">⚙️ الإعدادات</a>
+</div>
+<style>
+  .hnNavLink{ display:inline-flex; align-items:center; gap:5px; text-decoration:none; color:#B8B8BE; font-size:12.5px; padding:7px 12px; border-radius:10px; margin-left:2px; }
+  .hnNavLink:hover{ background:rgba(255,255,255,0.06); color:#F5F5F7; }
+  .hnNavLink.active{ background:rgba(212,175,55,0.15); color:#F5D060; font-weight:700; }
+</style>
+<script>
+(function(){
+  var page = location.pathname.split('/').pop();
+  document.querySelectorAll('.hnNavLink').forEach(function(a){
+    if(a.getAttribute('href') === page) a.classList.add('active');
+  });
+})();
+</script>
+
 <div class="hn-qn" id="hnQuickNav">
   <button class="hn-qn-btn" onclick="document.getElementById('hnQuickNav').classList.toggle('open')" aria-label="القائمة">
     <span class="hn-qn-dot"></span> القائمة
@@ -114,9 +139,9 @@
 
 <div class="setup-gate" id="gateScreen">
   <div class="setup-card glass">
-    <h1 style="font-size:18px;margin-bottom:10px;">الاتصال بقاعدة بيانات المحل</h1>
+    <h1 style="font-size:18px;margin-bottom:10px;">جاري تحميل بيانات المحل...</h1>
     <p style="color:var(--muted);font-size:13px;margin-bottom:20px;">اختر نفس مجلد "مجوهرات حسن نصار" للمتابعة.</p>
-    <button class="btn btn-gold" onclick="DB.pickFolder().then(afterConnect)">📁 اختيار مجلد البيانات</button>
+    <button class="btn btn-gold" onclick="DB.pickFolder().then(afterConnect)">📁 تحديد مجلد نسخة احتياطية (اختياري)</button>
   </div>
 </div>
 
@@ -233,49 +258,7 @@
 </div>
 
 <script>
-/* ===== DB engine ===== */
-function idbOpen(){ return new Promise((res,rej)=>{ const r=indexedDB.open('hn_db_meta',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
-async function idbGet(k){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction('kv','readonly'); const rq=tx.objectStore('kv').get(k); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error); }); }
-async function idbSet(k,v){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction('kv','readwrite'); tx.objectStore('kv').put(v,k); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); }
-const SHOP_NAME = 'مجوهرات حسن نصار';
-const DB = {
-  supported:'showDirectoryPicker' in window, dirHandle:null, shopHandle:null, connected:false,
-  async tryAutoConnect(){
-    if(!this.supported){ this.connected=true; return true; }
-    try{ const h=await idbGet('rootDirHandle'); if(!h) return false;
-      const perm=await h.queryPermission({mode:'readwrite'});
-      if(perm!=='granted'){ const req=await h.requestPermission({mode:'readwrite'}); if(req!=='granted') return false; }
-      this.dirHandle=h; this.shopHandle=await h.getDirectoryHandle(SHOP_NAME,{create:true}); this.connected=true; return true;
-    }catch(e){ return false; }
-  },
-  async pickFolder(){
-    if(!this.supported){ this.connected=true; return; }
-    try{
-      const saved = await idbGet('rootDirHandle');
-      if(saved){
-        const perm = await saved.requestPermission({mode:'readwrite'});
-        if(perm === 'granted'){
-          this.dirHandle=saved;
-          this.shopHandle=await this.dirHandle.getDirectoryHandle(SHOP_NAME,{create:true});
-          this.connected=true;
-          return;
-        }
-      }
-    }catch(e){ /* تجاهل وكمّل لاختيار مجلد جديد */ }
-    this.dirHandle=await window.showDirectoryPicker({mode:'readwrite'});
-    await idbSet('rootDirHandle', this.dirHandle);
-    this.shopHandle=await this.dirHandle.getDirectoryHandle(SHOP_NAME,{create:true});
-    this.connected=true;
-  },
-  async read(c,fb){
-    if(this.supported && this.shopHandle){ try{ const fh=await this.shopHandle.getFileHandle(c+'.json'); const f=await fh.getFile(); return JSON.parse(await f.text()); }catch(e){ return fb; } }
-    const v=await idbGet('fallback_'+c); return v!==undefined? v: fb;
-  },
-  async write(c,data){
-    if(this.supported && this.shopHandle){ const fh=await this.shopHandle.getFileHandle(c+'.json',{create:true}); const w=await fh.createWritable(); await w.write(JSON.stringify(data,null,2)); await w.close(); return; }
-    await idbSet('fallback_'+c, data);
-  }
-};
+/* DB engine now comes from firestore-db.js (loaded in <head>) — shared live data for every user. */
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3400); }
 
 let DATA = { inventory:[], invoices:[], safe:[], kasr:[], returns:[], layaway:[], repairs:[], settings:{} };
