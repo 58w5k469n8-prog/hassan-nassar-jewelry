@@ -233,8 +233,33 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="license-guard.js"></script>
+<script src="firestore-db.js"></script>
 </head>
 <body>
+<div id="hnGlobalNav" style="display:flex;align-items:center;gap:2px;padding:9px 14px;background:#0c0c0e;border-bottom:1px solid rgba(255,255,255,0.08);overflow-x:auto;white-space:nowrap;position:sticky;top:0;z-index:9997;direction:rtl;font-family:inherit;">
+  <a href="index.html" style="display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#F5D060;font-weight:700;font-size:12.5px;padding:7px 12px;margin-left:8px;">🏠 الرئيسية</a>
+  <a href="hassan-nassar-jewelry-02-dashboard.html" class="hnNavLink">📊 الداشبورد</a>
+  <a href="hassan-nassar-jewelry-03-data-core.html" class="hnNavLink">📦 المخزون والخزنة</a>
+  <a href="hassan-nassar-jewelry-04-invoice.html" class="hnNavLink">🧾 الفواتير</a>
+  <a href="hassan-nassar-jewelry-05-barcode-reports.html" class="hnNavLink">🏷️ الباركود والتقارير</a>
+  <a href="hassan-nassar-jewelry-07-transactions.html" class="hnNavLink">🔄 الحركات</a>
+  <a href="hassan-nassar-jewelry-08-finance-final.html" class="hnNavLink">💵 الحسابات المالية</a>
+  <a href="hassan-nassar-jewelry-06-settings-users.html" class="hnNavLink">⚙️ الإعدادات</a>
+</div>
+<style>
+  .hnNavLink{ display:inline-flex; align-items:center; gap:5px; text-decoration:none; color:#B8B8BE; font-size:12.5px; padding:7px 12px; border-radius:10px; margin-left:2px; }
+  .hnNavLink:hover{ background:rgba(255,255,255,0.06); color:#F5F5F7; }
+  .hnNavLink.active{ background:rgba(212,175,55,0.15); color:#F5D060; font-weight:700; }
+</style>
+<script>
+(function(){
+  var page = location.pathname.split('/').pop();
+  document.querySelectorAll('.hnNavLink').forEach(function(a){
+    if(a.getAttribute('href') === page) a.classList.add('active');
+  });
+})();
+</script>
+
 <div class="ambient"></div>
 
 <div class="app">
@@ -305,6 +330,17 @@
           <span class="lbl">فواتير اليوم</span>
           <span class="val" id="kpiInvoicesToday">0 فاتورة</span>
           <span class="delta" id="kpiTopKarat" style="color:var(--gold-1);">لا توجد فواتير بعد</span>
+        </div>
+      </div>
+
+      <!-- LIVE ACTIVITY FEED -->
+      <div class="panel glass" style="margin-bottom:18px;">
+        <h2 style="display:flex;align-items:center;gap:8px;font-size:15px;margin-bottom:14px;">
+          🟢 آخر العمليات (لايف)
+          <span id="feedLiveDot" style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;"></span>
+        </h2>
+        <div id="activityFeedList" style="display:flex;flex-direction:column;gap:2px;">
+          <div style="color:var(--muted);font-size:12.5px;padding:10px 0;">لا توجد عمليات مسجلة بعد</div>
         </div>
       </div>
 
@@ -389,26 +425,7 @@
 </div>
 
 <script>
-/* ===== DB engine (read-only here — same storage used by all other modules) ===== */
-function idbOpen(){ return new Promise((res,rej)=>{ const r=indexedDB.open('hn_db_meta',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
-async function idbGet(k){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction('kv','readonly'); const rq=tx.objectStore('kv').get(k); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error); }); }
-const SHOP_NAME = 'مجوهرات حسن نصار';
-const DB = {
-  supported:'showDirectoryPicker' in window, dirHandle:null, shopHandle:null, connected:false,
-  async tryAutoConnect(){
-    if(!this.supported){ this.connected=true; return true; }
-    try{ const h=await idbGet('rootDirHandle'); if(!h) return false;
-      const perm=await h.queryPermission({mode:'readwrite'});
-      if(perm!=='granted'){ const req=await h.requestPermission({mode:'readwrite'}); if(req!=='granted') return false; }
-      this.dirHandle=h; this.shopHandle=await h.getDirectoryHandle(SHOP_NAME,{create:true}); this.connected=true; return true;
-    }catch(e){ return false; }
-  },
-  async read(c,fb){
-    if(this.supported && this.shopHandle){ try{ const fh=await this.shopHandle.getFileHandle(c+'.json'); const f=await fh.getFile(); return JSON.parse(await f.text()); }catch(e){ return fb; } }
-    const v=await idbGet('fallback_'+c); return v!==undefined? v: fb;
-  }
-};
-
+/* DB engine now comes from firestore-db.js (loaded in <head>) — shared live data for every user */
 function fmtMoney(n){ return Math.round(n).toLocaleString('ar-EG'); }
 
 async function loadRealKpis(){
@@ -463,6 +480,41 @@ async function loadRealKpis(){
   topKaratEl.textContent = topKaratEntry ? ('أعلى مبيعًا: عيار ' + topKaratEntry[0]) : 'لا توجد فواتير بعد';
 }
 loadRealKpis();
+
+/* ===== LIVE ACTIVITY FEED ===== */
+function timeAgo(ts){
+  const diff = Math.max(0, Date.now() - ts);
+  const mins = Math.floor(diff / 60000);
+  if(mins < 1) return 'الآن';
+  if(mins < 60) return 'منذ ' + mins + ' دقيقة';
+  const hrs = Math.floor(mins / 60);
+  if(hrs < 24) return 'منذ ' + hrs + ' ساعة';
+  return new Date(ts).toLocaleDateString('ar-EG');
+}
+const ACTION_LABELS = {
+  inventory: 'حرّك بيانات المخزون', customers: 'حدّث بيانات عميل', suppliers: 'حدّث بيانات مورد',
+  safe: 'سجّل حركة في الخزنة', invoices: 'سجّل فاتورة', goldsmiths: 'حدّث حساب صائغ',
+  goldsmith_tx: 'سجّل حركة صاغة', layaway: 'سجّل حجز', old_gold: 'سجّل كسر ذهب قديم',
+  repairs: 'سجّل تصليح', returns: 'سجّل مرتجع', credit_ledger: 'حدّث حساب آجل',
+  opex: 'سجّل مصروف', workshop_loss: 'سجّل فاقد ورشة', settings: 'حدّث الإعدادات'
+};
+function renderActivityFeed(docs){
+  const list = document.getElementById('activityFeedList');
+  if(!docs.length){ list.innerHTML = '<div style="color:var(--muted);font-size:12.5px;padding:10px 0;">لا توجد عمليات مسجلة بعد</div>'; return; }
+  list.innerHTML = docs.map(d => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 4px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:12.5px;">
+      <span><b style="color:var(--gold-1);">${d.user || 'غير معروف'}</b> — ${ACTION_LABELS[d.key] || 'نفّذ عملية'}</span>
+      <span style="color:var(--muted);">${timeAgo(d.at)}</span>
+    </div>
+  `).join('');
+}
+if(window.HN_FSDB){
+  HN_FSDB.collection('activity_log').orderBy('at','desc').limit(10)
+    .onSnapshot(snap => {
+      const docs = []; snap.forEach(d => docs.push(d.data()));
+      renderActivityFeed(docs);
+    }, err => console.warn('activity feed listener error:', err));
+}
 
 /* ===== ticker data (duplicated once for seamless loop) ===== */
 const tickItems = [
