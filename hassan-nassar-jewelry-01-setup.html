@@ -233,7 +233,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="license-guard.js"></script>
-<script src="firestore-db.js"></script>
+  <script src="firestore-db.js"></script>
 </head>
 <body>
 <div id="hnGlobalNav" style="display:flex;align-items:center;gap:2px;padding:9px 14px;background:#0c0c0e;border-bottom:1px solid rgba(255,255,255,0.08);overflow-x:auto;white-space:nowrap;position:sticky;top:0;z-index:9997;direction:rtl;font-family:inherit;">
@@ -413,7 +413,7 @@
 </div>
 
 <script>
-/* ===== ticker data (duplicated once for seamless loop) ===== */
+/* ===== ticker data ===== */
 const tickItems = [
   {k:'عيار 24', v:'٤٤٠٠ ج.م', chip:'up', chipv:'+0.6%'},
   {k:'عيار 21', v:'٣٨٥٠ ج.م', chip:'up', chipv:'+0.6%'},
@@ -436,21 +436,10 @@ function renderTicker(){
 }
 renderTicker();
 
-/* ===== karat price calculator =====
-   Formula (as specified):
-   price18 = price21 * (18/21)
-   price24 = price21 * (24/21)
-   Generalized for any karat: priceK = price21 * (K/21)
-*/
-/* DB engine now comes from firestore-db.js (loaded in <head>) — shared live data for every user. */
+/* DB engine now comes from firestore-db.js — shared live data for every user. */
 let SETTINGS = { basePrice21: 3850 };
 
-/* ===== karat price calculator =====
-   Formula (as specified):
-   price18 = price21 * (18/21)
-   price24 = price21 * (24/21)
-   Generalized for any karat: priceK = price21 * (K/21)
-*/
+/* ===== karat price calculator ===== */
 const KARATS = [24,21,18,14,12,9];
 function renderKaratGrid(){
   const base = parseFloat(document.getElementById('basePrice').value) || 0;
@@ -462,28 +451,24 @@ function renderKaratGrid(){
 }
 document.getElementById('basePrice').addEventListener('input', renderKaratGrid);
 document.getElementById('basePrice').addEventListener('change', async ()=>{
-  // Persist to settings.json so the invoice, reports, and every other
-  // module read this exact same manually-entered price — never a separate number.
-  if(!DB.connected) return;
-  SETTINGS.basePrice21 = parseFloat(document.getElementById('basePrice').value) || 0;
-  await DB.write('settings', SETTINGS);
+  if(window.DB && DB.connected){
+    SETTINGS.basePrice21 = parseFloat(document.getElementById('basePrice').value) || 0;
+    await DB.write('settings', SETTINGS);
+  }
 });
 renderKaratGrid();
 
 (async function syncPriceFromSettings(){
-  const ok = await DB.tryAutoConnect();
-  if(!ok) return; // no folder connected yet on this browser — keep local default
-  SETTINGS = await DB.read('settings', SETTINGS);
-  if(SETTINGS.basePrice21){
-    document.getElementById('basePrice').value = SETTINGS.basePrice21;
-    renderKaratGrid();
+  if(window.DB && await DB.tryAutoConnect()){
+    SETTINGS = await DB.read('settings', SETTINGS);
+    if(SETTINGS.basePrice21){
+      document.getElementById('basePrice').value = SETTINGS.basePrice21;
+      renderKaratGrid();
+    }
   }
 })();
 
 function fetchLivePrice(){
-  // Manual entry is the primary, fully-working flow — the karat grid
-  // already updates live as you type in the price field above.
-  // This button is just a confirmation until a live API provider is connected.
   renderKaratGrid();
   document.getElementById('lastUpdate').textContent = 'آخر تحديث: الآن (يدوي) — ' + new Date().toLocaleTimeString('ar-EG');
   const btn = event.target;
@@ -515,17 +500,13 @@ document.addEventListener('keydown', (e)=>{
 });
 overlay.addEventListener('click', (e)=>{ if(e.target === overlay) overlay.classList.remove('show'); });
 
-/* ===== barcode scanner listener (keyboard-wedge style) =====
-   Most USB barcode scanners type digits very fast then send Enter.
-   This listens globally, buffers fast keystrokes, and on Enter
-   treats the buffer as a scanned code (only when not typing in a field).
-*/
+/* ===== barcode scanner listener ===== */
 let scanBuffer = '';
 let lastKeyTime = 0;
 document.addEventListener('keydown', (e)=>{
-  if(document.activeElement.tagName === 'INPUT') return; // don't hijack normal typing
+  if(document.activeElement.tagName === 'INPUT') return;
   const now = Date.now();
-  if(now - lastKeyTime > 60) scanBuffer = ''; // reset if typing is too slow to be a scanner
+  if(now - lastKeyTime > 60) scanBuffer = '';
   lastKeyTime = now;
   if(e.key === 'Enter'){
     if(scanBuffer.length >= 4){
