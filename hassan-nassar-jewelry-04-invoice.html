@@ -113,13 +113,13 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="license-guard.js"></script>
-<script src="firestore-db.js"></script>
+  <script src="firestore-db.js"></script>
 
   <!-- قراءة الباركود من الكاميرا -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
   <script src="camera-scan.js"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   .receipt-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(8px); z-index:200; display:none; align-items:center; justify-content:center; padding:20px; }
   .receipt-overlay.show{ display:flex; }
@@ -361,6 +361,7 @@ function showToast(msg){ const t=document.getElementById('toast'); t.textContent
 let DATA = { inventory:[], customers:[], suppliers:[], safe:[], goldsmiths:[], goldsmithTx:[], invoices:[] };
 let cart = []; // {invId, name, code, karat, netW, pricePerGram, fee, total}
 let selectedPay = new Set();
+let currentInvoiceNumber = '';
 
 async function afterConnect(){
   document.getElementById('gateScreen').style.display='none';
@@ -376,7 +377,8 @@ async function afterConnect(){
   if(settings.basePrice21) BASE_PRICE_21 = settings.basePrice21;
   SILVER_PRICES = await DB.read('silver_prices', { p999:0, p925:0, p800:0 });
 
-  document.getElementById('invoiceNo').textContent = 'رقم الفاتورة: HN-INV-' + (DATA.invoices.length + 1).toString().padStart(5,'0');
+  currentInvoiceNumber = 'HN-INV-' + (DATA.invoices.length + 1).toString().padStart(5,'0');
+  document.getElementById('invoiceNo').textContent = 'رقم الفاتورة: ' + currentInvoiceNumber;
   document.getElementById('invoiceDate').textContent = new Date().toLocaleString('ar-EG');
   renderCart();
 }
@@ -384,11 +386,8 @@ async function afterConnect(){
 
 /* =========================================================
    GOLD PRICE PER KARAT (manual base @21) + SILVER (manual per purity)
-   Read from settings.json / silver_prices.json (saved from the Settings
-   module) so the invoice always uses the same manually-entered price as
-   the rest of the system — never a separate/stale number.
 ========================================================= */
-let BASE_PRICE_21 = 3850; // fallback default until settings.json loads
+let BASE_PRICE_21 = 3850;
 let SILVER_PRICES = { p999:0, p925:0, p800:0 };
 function isSilverKarat(karat){ return karat >= 800; }
 function karatLabel(karat){ return isSilverKarat(karat) ? ('فضة ' + karat) : ('عيار ' + karat); }
@@ -401,7 +400,7 @@ function pricePerGram(karat){
 }
 
 /* =========================================================
-   SMART SEARCH (barcode / code / name) + prevents re-adding sold or already-in-cart items
+   SMART SEARCH
 ========================================================= */
 const searchInput = document.getElementById('searchInput');
 const searchResults = document.getElementById('searchResults');
@@ -428,7 +427,6 @@ searchInput.addEventListener('input', ()=>{
 });
 document.addEventListener('click', (e)=>{ if(!e.target.closest('.search-box')) searchResults.classList.remove('show'); });
 
-// barcode scanner (keyboard-wedge): fast keystrokes + Enter while search box focused
 let scanBuf=''; let lastKey=0;
 searchInput.addEventListener('keydown',(e)=>{
   const now=Date.now();
@@ -441,9 +439,6 @@ searchInput.addEventListener('keydown',(e)=>{
   }
 });
 
-/* مسح باركود صنف أثناء كتابة الفاتورة: بيدور على الصنف في المخزون بنفس
-   الكود المطبوع على الملصق، ولو لقاه متاح بيضيفه للفاتورة فوراً بكل بياناته
-   (عيار، وزن، سعر، مصنعية) من غير أي كتابة يدوية */
 function scanInvoiceBarcode(){
   HNScanner.open((code)=>{
     const item = DATA.inventory.find(i=>i.code===code);
@@ -459,7 +454,7 @@ function addToCart(invId){
   const item = DATA.inventory.find(i=>i.id===invId);
   if(!item || item.status!=='available'){ showToast('هذه القطعة غير متاحة أو تم بيعها بالفعل'); return; }
   const ppg = pricePerGram(item.karat);
-  cart.push({ invId:item.id, name:item.name, code:item.code, karat:item.karat, netW:item.netW, pricePerGram:ppg, fee:item.feeRetail });
+  cart.push({ invId:item.id, name:item.name, code:item.code, karat:item.karat, netW:item.netW, pricePerGram:ppg, fee:item.feeRetail || 0 });
   searchInput.value=''; searchResults.classList.remove('show');
   renderCart();
 }
@@ -474,7 +469,7 @@ function renderCart(){
   document.getElementById('itemsEmpty').style.display = cart.length ? 'none' : 'block';
   body.innerHTML = cart.map(c=>{
     const goldValue = c.netW * c.pricePerGram;
-    const feeTotal = c.fee * c.netW; // fee is entered per gram, total = rate × weight
+    const feeTotal = c.fee * c.netW;
     const total = goldValue + feeTotal;
     return `<tr>
       <td>${c.name}<br><span style="color:var(--muted);font-size:10.5px;">${c.code} · ${karatLabel(c.karat)}</span></td>
@@ -539,189 +534,166 @@ function calcRemain(){
 
 /* =========================================================
    SAVE INVOICE
-   - deducts sold items from inventory
-   - auto-creates customer if new
-   - posts totals to the safe (cash/card portions) and to customer credit ledger
 ========================================================= */
 async function saveInvoice(){
   if(cart.length===0){ showToast('أضف صنفاً واحداً على الأقل للفاتورة'); return; }
   const custPhone = document.getElementById('custPhone').value.trim();
   const custName = document.getElementById('custName').value.trim();
-  if(!custPhone || !custName){ showToast('أدخل بيانات العميل'); return; }
+  if(!custPhone || !custName){ showToast('أدخل بيانات العميل كاملة (الاسم والفريد)'); return; }
   if(selectedPay.size===0){ showToast('اختر طريقة دفع واحدة على الأقل'); return; }
 
   const grand = parseFloat(document.getElementById('totGrand').textContent) || 0;
   let paid = 0;
   const payBreakdown = {};
-  selectedPay.forEach(t=>{ const v = parseFloat(document.getElementById('amt-'+t).value)||0; payBreakdown[t]=v; paid+=v; });
-  if(Math.abs(grand-paid) > 0.01){ showToast('مجموع طرق الدفع لا يطابق إجمالي الفاتورة'); return; }
-
-  // 1) auto-create/update customer
-  let customer = DATA.customers.find(c=>c.phone===custPhone);
-  if(!customer){
-    customer = { id:'cus_'+Date.now(), name:custName, phone:custPhone, notes:'', addedAt:Date.now() };
-    DATA.customers.push(customer);
-  } else { customer.name = custName; }
-  await DB.write('customers', DATA.customers);
-
-  // 2) mark sold items + deduct from inventory
-  cart.forEach(c=>{
-    const item = DATA.inventory.find(i=>i.id===c.invId);
-    if(item) item.status = 'sold';
+  selectedPay.forEach(t=>{
+    const v = parseFloat(document.getElementById('amt-'+t).value)||0;
+    payBreakdown[t] = v;
+    paid += v;
   });
-  await DB.write('inventory', DATA.inventory);
 
-  // 3) post cash + card portions to the safe automatically
-  const cashCardTotal = (payBreakdown.cash||0) + (payBreakdown.card||0) + (payBreakdown.oldgold||0);
-  if(cashCardTotal > 0){
-    DATA.safe.push({ id:'sfx_'+Date.now(), type:'income', amount:cashCardTotal, desc:'مبيعات فاتورة '+document.getElementById('invoiceNo').textContent, at:Date.now() });
-    await DB.write('safe', DATA.safe);
+  if(Math.abs(grand - paid) > 0.5){
+    if(!confirm('مجموع طريقة الدفع المحددة يختلف عن إجمالي الفاتورة. هل ترغب في الاستمرار؟')) return;
   }
 
-  // 4) save invoice record
-  const invoice = {
-    id:'inv_'+Date.now(), no:document.getElementById('invoiceNo').textContent,
-    customerId:customer.id, items:cart, grand, payBreakdown, at:Date.now()
+  // 1. Create or Update Customer
+  let cust = DATA.customers.find(c=>c.phone===custPhone);
+  if(!cust){
+    cust = { id: 'CUST-' + Date.now(), name: custName, phone: custPhone, balance: 0, createdAt: new Date().toISOString() };
+    DATA.customers.push(cust);
+  } else {
+    cust.name = custName;
+  }
+  if(payBreakdown.credit){
+    cust.balance = (cust.balance || 0) + payBreakdown.credit;
+  }
+
+  // 2. Deduct items from Inventory
+  cart.forEach(cItem => {
+    const invIndex = DATA.inventory.findIndex(i => i.id === cItem.invId);
+    if(invIndex !== -1){
+      DATA.inventory[invIndex].status = 'sold';
+      DATA.inventory[invIndex].soldAt = new Date().toISOString();
+      DATA.inventory[invIndex].invoiceNo = currentInvoiceNumber;
+    }
+  });
+
+  // 3. Register Safe Transaction for Cash & Card
+  const cashAmt = payBreakdown.cash || 0;
+  const cardAmt = payBreakdown.card || 0;
+  if(cashAmt > 0){
+    DATA.safe.push({
+      id: 'TX-' + Date.now() + '-1',
+      date: new Date().toISOString(),
+      type: 'in',
+      amount: cashAmt,
+      method: 'cash',
+      category: 'فاتورة بيع',
+      desc: `تحصيل كاش للفاتورة ${currentInvoiceNumber} - العميل: ${custName}`
+    });
+  }
+  if(cardAmt > 0){
+    DATA.safe.push({
+      id: 'TX-' + Date.now() + '-2',
+      date: new Date().toISOString(),
+      type: 'in',
+      amount: cardAmt,
+      method: 'card',
+      category: 'فاتورة بيع',
+      desc: `تحصيل شبكة للفاتورة ${currentInvoiceNumber} - العميل: ${custName}`
+    });
+  }
+
+  // 4. Save Invoice Entry
+  const invoiceRecord = {
+    id: currentInvoiceNumber,
+    date: new Date().toISOString(),
+    customer: { name: custName, phone: custPhone },
+    items: [...cart],
+    totals: {
+      weight: parseFloat(document.getElementById('totWeight').textContent),
+      gold: parseFloat(document.getElementById('totGold').textContent),
+      fee: parseFloat(document.getElementById('totFee').textContent),
+      grand: grand
+    },
+    payments: payBreakdown
   };
-  DATA.invoices.push(invoice);
+  DATA.invoices.push(invoiceRecord);
+
+  // Sync to Firestore
+  await DB.write('inventory', DATA.inventory);
+  await DB.write('customers', DATA.customers);
+  await DB.write('safe', DATA.safe);
   await DB.write('invoices', DATA.invoices);
 
-  showToast('تم حفظ الفاتورة، وخُصمت الأصناف من المخزون، ورُحّل المبلغ للخزنة تلقائياً ✅');
-  renderReceipt(invoice, customer);
-  document.getElementById('receiptOverlay').classList.add('show');
-  resetInvoice(true);
+  showToast('تم حفظ الفاتورة بنجاح ✅');
+  openReceiptModal(invoiceRecord);
 }
 
-function toArabicDigits(str){
-  const map = {'0':'٠','1':'١','2':'٢','3':'٣','4':'٤','5':'٥','6':'٦','7':'٧','8':'٨','9':'٩'};
-  return String(str).replace(/[0-9]/g, d=>map[d]);
-}
-function poundsQirsh(value){
-  const pounds = Math.floor(value);
-  const qirsh = Math.round((value - pounds) * 100);
-  return { p: toArabicDigits(pounds), q: toArabicDigits(qirsh) };
+function resetInvoice(){
+  cart = [];
+  selectedPay.clear();
+  document.querySelectorAll('.pay-chip').forEach(c=>c.classList.remove('selected'));
+  document.querySelectorAll('.pay-inputs').forEach(b=>b.classList.remove('show'));
+  document.querySelectorAll('.pay-inputs input').forEach(i=>i.value='');
+  document.getElementById('custPhone').value = '';
+  document.getElementById('custName').value = '';
+  document.getElementById('searchInput').value = '';
+  renderCart();
+  if(DATA.invoices){
+    currentInvoiceNumber = 'HN-INV-' + (DATA.invoices.length + 1).toString().padStart(5,'0');
+    document.getElementById('invoiceNo').textContent = 'رقم الفاتورة: ' + currentInvoiceNumber;
+  }
 }
 
-let currentReceiptPhone = '';
-function renderReceipt(invoice, customer){
-  currentReceiptPhone = customer.phone || '';
-  document.getElementById('rInvNo').textContent = toArabicDigits(invoice.no.replace(/\D/g,'').padStart(7,'0'));
-  const d = new Date(invoice.at);
-  document.getElementById('rDate').textContent = toArabicDigits(d.getDate())+' / '+toArabicDigits(d.getMonth()+1)+' / '+toArabicDigits(d.getFullYear())+'م';
-  document.getElementById('rCustName').textContent = customer.name;
-  document.getElementById('rCustName2').textContent = customer.name;
-  document.getElementById('rCustPhone').textContent = customer.phone;
+/* =========================================================
+   RECEIPT MODAL & ACTIONS
+========================================================= */
+function openReceiptModal(inv){
+  document.getElementById('rInvNo').textContent = inv.id;
+  document.getElementById('rDate').textContent = new Date(inv.date).toLocaleDateString('ar-EG');
+  document.getElementById('rCustName').textContent = inv.customer.name;
+  document.getElementById('rCustName2').textContent = inv.customer.name;
+  document.getElementById('rCustPhone').textContent = inv.customer.phone;
 
-  let rowsHtml = invoice.items.map(c=>{
-    const total = (c.netW*c.pricePerGram) + (c.fee*c.netW);
-    const gram = Math.floor(c.netW);
-    const milli = Math.round((c.netW-gram)*1000);
-    const rate = poundsQirsh(c.pricePerGram);
-    const val = poundsQirsh(total);
+  const rBody = document.getElementById('rItemsBody');
+  rBody.innerHTML = inv.items.map(item => {
+    const totalVal = (item.netW * item.pricePerGram) + (item.fee * item.netW);
+    const grams = Math.floor(item.netW);
+    const millis = Math.round((item.netW - grams) * 1000);
+    const pounds = Math.floor(totalVal);
+    const piastres = Math.round((totalVal - pounds) * 100);
+
     return `<tr>
-      <td class="bayan">${c.name}</td>
-      <td>${toArabicDigits(gram)}</td><td>${toArabicDigits(milli)}</td>
-      <td>${rate.p}</td><td>${rate.q}</td>
-      <td>١</td>
-      <td>${toArabicDigits(c.karat)}</td>
-      <td>${val.p}</td><td>${val.q}</td>
+      <td class="bayan">${item.name}</td>
+      <td>${grams}</td>
+      <td>${millis}</td>
+      <td>${item.pricePerGram.toFixed(0)}</td>
+      <td>00</td>
+      <td>1</td>
+      <td>${item.karat}</td>
+      <td>${pounds}</td>
+      <td>${piastres}</td>
     </tr>`;
   }).join('');
 
-  const grandVal = poundsQirsh(invoice.grand);
-  rowsHtml += `<tr style="font-weight:700;background:#f0ede0;">
-    <td class="bayan">الإجمالي</td><td colspan="4"></td><td colspan="2"></td><td>${grandVal.p}</td><td>${grandVal.q}</td>
-  </tr>`;
-  // pad with a couple of empty ledger rows for the authentic paper-invoice look
-  for(let i=0;i<2;i++){ rowsHtml += `<tr><td class="bayan">&nbsp;</td><td colspan="8"></td></tr>`; }
-
-  document.getElementById('rItemsBody').innerHTML = rowsHtml;
+  document.getElementById('receiptOverlay').classList.add('show');
 }
 
-async function downloadReceiptImage(){
-  const el = document.getElementById('receiptPrint');
-  const canvas = await html2canvas(el, {scale:2, backgroundColor:'#ffffff'});
-  const link = document.createElement('a');
-  link.download = 'فاتورة-' + document.getElementById('rInvNo').textContent.replace(/\s/g,'') + '.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
+function downloadReceiptImage(){
+  const node = document.getElementById('receiptPrint');
+  html2canvas(node, { scale: 2 }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = `${currentInvoiceNumber}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
 }
 
-function normalizeEgyptPhone(phone){
-  let digits = (phone || '').replace(/\D/g,'');
-  if(digits.startsWith('0')) digits = '20' + digits.slice(1);       // 01012345678 → 201012345678
-  else if(!digits.startsWith('20')) digits = '20' + digits;          // safety fallback
-  return digits;
-}
-
-async function shareReceiptWhatsapp(){
-  if(!currentReceiptPhone){ showToast('لا يوجد رقم هاتف مسجل لهذا العميل'); return; }
-  const el = document.getElementById('receiptPrint');
-  const canvas = await html2canvas(el, {scale:3, backgroundColor:'#ffffff'}); // scale 3 = higher quality image
-
-  canvas.toBlob(async (blob)=>{
-    const fileName = 'فاتورة-' + document.getElementById('rInvNo').textContent.replace(/\s/g,'') + '.png';
-    const waNumber = normalizeEgyptPhone(currentReceiptPhone);
-
-    // ملحوظة أمانة: لا يوجد أي متصفح أو موقع يقدر يفتح شات عميل محدد على واتساب
-    // ويحط صورة جاهزة فيه ويخلّيك تدوس "إرسال" بس من غير أي خطوة تانية — ده قيد
-    // من واتساب نفسه لأسباب أمان (مفيش رابط wa.me بيدعم إرفاق صورة، ومفيش API
-    // لأي موقع يتحكم في شات محدد). اللي تحته أقرب حاجة ممكنة تقنياً:
-
-    // الخيار الأول (الأفضل على الموبايل): نافذة المشاركة الأصلية للجهاز، بتيجي
-    // ومعاها الصورة مرفقة جاهزة — تختار واتساب من القائمة، تختار شات العميل،
-    // وتدوس إرسال. خطوتين بس، والصورة مرفقة تلقائي بدون نسخ أو لصق.
-    try{
-      const file = new File([blob], fileName, {type:'image/png'});
-      if(navigator.canShare && navigator.canShare({files:[file]})){
-        await navigator.share({ files:[file], title: fileName, text: 'فاتورة من مجوهرات حسن نصار' });
-        showToast('اختر "واتساب" من القائمة، بعدها اختر شات العميل ودوس إرسال');
-        return;
-      }
-    }catch(e){
-      if(e && e.name === 'AbortError') return; // المستخدم قفل نافذة المشاركة بنفسه
-      // أي خطأ تاني: كمّل على الطريقة البديلة تحت
-    }
-
-    // الخيار البديل (سطح المكتب أو متصفح لا يدعم المشاركة الأصلية): نسخ الصورة
-    // للحافظة تلقائياً، وفتح شات العميل مباشرة — يبقى بس تدوس Ctrl+V وترسل.
-    let copied = false;
-    try{
-      if(navigator.clipboard && window.ClipboardItem){
-        await navigator.clipboard.write([ new ClipboardItem({ 'image/png': blob }) ]);
-        copied = true;
-      }
-    }catch(e){ copied = false; }
-
-    window.open(`https://wa.me/${waNumber}`, '_blank');
-
-    if(copied){
-      showToast('اتفتح شات العميل، والصورة اتنسخت تلقائي — دوس Ctrl+V (أو الصق) جوه الشات وابعتها');
-    } else {
-      // آخر بديل لو المتصفح مش بيدعم أي مما سبق (مثل Safari/Firefox القديمة):
-      // تنزيل الصورة عشان ترفقها يدوياً.
-      const link = document.createElement('a');
-      link.download = fileName;
-      link.href = URL.createObjectURL(blob);
-      link.click();
-      showToast('اتفتح شات العميل — متصفحك لا يدعم النسخ التلقائي، فتم تنزيل الصورة لإرفاقها يدوياً');
-    }
-  }, 'image/png');
-}
-
-function resetInvoice(afterSave){
-  cart = [];
-  selectedPay.forEach(t=>document.querySelector(`.pay-chip[data-pay="${t}"]`).classList.remove('selected'));
-  document.querySelectorAll('.pay-inputs').forEach(b=>b.classList.remove('show'));
-  selectedPay = new Set();
-  document.getElementById('custPhone').value='';
-  document.getElementById('custName').value='';
-  document.getElementById('remainWarn').classList.remove('show');
-  renderCart();
-  if(afterSave){
-    document.getElementById('invoiceNo').textContent = 'رقم الفاتورة: HN-INV-' + (DATA.invoices.length + 1).toString().padStart(5,'0');
-    document.getElementById('invoiceDate').textContent = new Date().toLocaleString('ar-EG');
-  }
+function shareReceiptWhatsapp(){
+  const custPhone = document.getElementById('custPhone').value.trim();
+  const phone = custPhone.startsWith('0') ? '2' + custPhone : custPhone;
+  const msg = encodeURIComponent(`مجوهرات حسن نصار\nشكراً لتعاملكم معنا!\nتم إصدار الفاتورة رقم: ${currentInvoiceNumber}\nالإجمالي: ${document.getElementById('totGrand').textContent}`);
+  window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
 }
 </script>
 </body>
