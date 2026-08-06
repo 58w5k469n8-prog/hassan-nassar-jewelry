@@ -21,13 +21,13 @@
   .wrap{ position:relative; z-index:1; max-width:1180px; margin:0 auto; padding:20px; }
 
   .tabs{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
-  .tab{ padding:10px 18px; border-radius:12px; font-size:13.5px; cursor:pointer; color:var(--muted); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); transition:all 0.2s; }
-  .tab.active{ color:var(--cream); background:linear-gradient(120deg, rgba(255,214,10,0.14), rgba(255,159,10,0.08)); box-shadow:inset 0 0 0 1px rgba(255,159,10,0.3); font-weight:700; }
+  .tab{ padding:10px 18px; border-radius:12px; font-size:13.5px; cursor:pointer; color:var(--muted); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); }
+  .tab.active{ color:var(--cream); background:linear-gradient(120deg, rgba(255,214,10,0.14), rgba(255,159,10,0.08)); box-shadow:inset 0 0 0 1px rgba(255,159,10,0.3); }
   .panel{ display:none; } .panel.active{ display:block; }
 
   .grid2{ display:grid; grid-template-columns:360px 1fr; gap:16px; align-items:start; }
   .card{ padding:20px; }
-  .card h2{ font-size:14.5px; margin-bottom:14px; color:var(--gold-1); }
+  .card h2{ font-size:14.5px; margin-bottom:14px; }
   label{ font-size:12px; color:var(--muted); display:block; margin-bottom:6px; }
   input,select,textarea{ width:100%; padding:11px 13px; border-radius:12px; margin-bottom:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); color:var(--cream); font-size:13.5px; outline:none; transition:all .25s var(--ease); font-family:inherit; }
   input:focus,select:focus,textarea:focus{ border-color:var(--blue); box-shadow:0 0 0 4px rgba(10,132,255,0.16); transform:scale(1.01); background:rgba(10,132,255,0.05); }
@@ -46,7 +46,7 @@
   .calc-row{ display:flex; justify-content:space-between; font-size:12.5px; padding:5px 0; }
   .calc-row.total{ font-weight:700; color:var(--gold-1); font-size:15px; border-top:1px solid rgba(255,255,255,0.08); margin-top:6px; padding-top:9px; }
 
-  .status-pill{ font-size:10.5px; padding:3px 9px; border-radius:8px; display:inline-block; font-weight:600; }
+  .status-pill{ font-size:10.5px; padding:3px 9px; border-radius:8px; }
   .status-pill.received{ background:rgba(10,132,255,0.14); color:var(--blue); }
   .status-pill.workshop{ background:rgba(255,159,10,0.14); color:var(--gold-1); }
   .status-pill.ready{ background:rgba(48,209,88,0.14); color:var(--green); }
@@ -54,20 +54,19 @@
   .status-pill.reserved{ background:rgba(255,159,10,0.14); color:var(--gold-1); }
   .status-pill.completed{ background:rgba(48,209,88,0.14); color:var(--green); }
 
-  .sr-item{ padding:10px 12px; cursor:pointer; border-radius:10px; font-size:12.5px; display:flex; justify-content:space-between; margin-bottom:4px; background:rgba(255,255,255,0.02); }
-  .sr-item:hover{ background:rgba(255,214,10,0.08); color:var(--gold-1); }
+  .sr-item{ padding:10px 12px; cursor:pointer; border-radius:10px; font-size:12.5px; display:flex; justify-content:space-between; }
+  .sr-item:hover{ background:rgba(255,255,255,0.04); }
 
   #toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
     background:var(--liquid-glass); backdrop-filter:blur(20px); border:1px solid var(--glass-border);
-    border-radius:14px; padding:12px 20px; font-size:13px; opacity:0; pointer-events:none; transition:all .35s var(--ease); z-index:9999; }
+    border-radius:14px; padding:12px 20px; font-size:13px; opacity:0; pointer-events:none; transition:all .35s var(--ease); z-index:50; }
   #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
 
   .setup-gate{ display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
   .setup-card{ max-width:440px; width:100%; padding:32px; text-align:center; }
 
   @media (max-width:900px){ .grid2{ grid-template-columns:1fr; } }
-
-  /* ===== Quick Nav ===== */
+  /* ===== Hassan Nassar Quick Nav (floating) ===== */
   .hn-qn{ position:fixed; top:16px; left:16px; z-index:999; }
   .hn-qn-btn{ display:flex; align-items:center; gap:8px; padding:10px 16px; border-radius:100px; border:none; cursor:pointer;
     background:var(--liquid-glass); backdrop-filter:blur(25px) saturate(140%); -webkit-backdrop-filter:blur(25px) saturate(140%);
@@ -84,9 +83,10 @@
   .hn-qn-menu a{ display:block; padding:10px 12px; border-radius:10px; color:var(--cream); text-decoration:none; font-size:13px; transition:background .15s; }
   .hn-qn-menu a:hover{ background:rgba(255,255,255,0.06); color:var(--gold-1); }
   @media(max-width:640px){ .hn-qn{ top:10px; left:10px; } .hn-qn-btn{ padding:9px 13px; font-size:11.5px; } }
+
 </style>
 
-<!-- Firebase & Firestore Scripts -->
+<!-- Firebase & License Guard -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 <script src="license-guard.js"></script>
@@ -94,15 +94,13 @@
 
 </head>
 <body>
-
-<!-- Global Header Navigation -->
 <div id="hnGlobalNav" style="display:flex;align-items:center;gap:2px;padding:9px 14px;background:#0c0c0e;border-bottom:1px solid rgba(255,255,255,0.08);overflow-x:auto;white-space:nowrap;position:sticky;top:0;z-index:9997;direction:rtl;font-family:inherit;">
   <a href="index.html" style="display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:#F5D060;font-weight:700;font-size:12.5px;padding:7px 12px;margin-left:8px;">🏠 الرئيسية</a>
   <a href="hassan-nassar-jewelry-02-dashboard.html" class="hnNavLink">📊 الداشبورد</a>
   <a href="hassan-nassar-jewelry-03-data-core.html" class="hnNavLink">📦 المخزون والخزنة</a>
   <a href="hassan-nassar-jewelry-04-invoice.html" class="hnNavLink">🧾 الفواتير</a>
   <a href="hassan-nassar-jewelry-05-barcode-reports.html" class="hnNavLink">🏷️ الباركود والتقارير</a>
-  <a href="hassan-nassar-jewelry-07-transactions.html" class="hnNavLink">🔄 الحركات والخدمات</a>
+  <a href="hassan-nassar-jewelry-07-transactions.html" class="hnNavLink">🔄 الحركات</a>
   <a href="hassan-nassar-jewelry-08-finance-final.html" class="hnNavLink">💵 الحسابات المالية</a>
   <a href="hassan-nassar-jewelry-06-settings-users.html" class="hnNavLink">⚙️ الإعدادات</a>
 </div>
@@ -139,16 +137,14 @@
 <div class="ambient"></div>
 <div id="toast"></div>
 
-<!-- Gate Screen -->
 <div class="setup-gate" id="gateScreen">
   <div class="setup-card glass">
     <h1 style="font-size:18px;margin-bottom:10px;">جاري تحميل بيانات المحل...</h1>
-    <p style="color:var(--muted);font-size:13px;margin-bottom:20px;">يرجى الانتظار حتى الاتصال بالمعهد البرمجي الموحد.</p>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:20px;">اختر نفس مجلد "مجوهرات حسن نصار" للمتابعة.</p>
     <button class="btn btn-gold" onclick="DB.pickFolder().then(afterConnect)">📁 تحديد مجلد نسخة احتياطية (اختياري)</button>
   </div>
 </div>
 
-<!-- Main Application UI -->
 <div class="wrap" id="appScreen" style="display:none;">
   <div class="tabs">
     <div class="tab active" data-tab="oldgold">♻️ شراء الذهب الكسر</div>
@@ -162,45 +158,23 @@
     <div class="grid2">
       <div class="card glass">
         <h2>استلام ذهب كسر من العميل</h2>
-        <label>الوزن القائم (كما هو)</label>
-        <input id="kasrGross" type="number" step="0.01" oninput="calcKasr()">
-        <label>خصم الفصوص/الأوساخ (جرام)</label>
-        <input id="kasrDeduct" type="number" step="0.01" value="0" oninput="calcKasr()">
-        <label>العيار</label>
-        <select id="kasrKarat" onchange="calcKasr()">
-          <option value="24">عيار 24</option>
-          <option value="21" selected>عيار 21</option>
-          <option value="18">عيار 18</option>
-          <option value="14">عيار 14</option>
-          <option value="9">عيار 9</option>
-        </select>
+        <label>الوزن القائم (كما هو)</label><input id="kasrGross" type="number" step="0.01" oninput="calcKasr()">
+        <label>خصم الفصوص/الأوساخ (جرام)</label><input id="kasrDeduct" type="number" step="0.01" value="0" oninput="calcKasr()">
+        <label>العيار</label><select id="kasrKarat" onchange="calcKasr()"><option>24</option><option selected>21</option><option>18</option><option>14</option><option>9</option></select>
         <div class="calc-box">
           <div class="calc-row"><span>الوزن الصافي</span><b id="kasrNet">0.00 جم</b></div>
-          <div class="calc-row"><span>سعر شراء الجرام</span><b id="kasrPrice">0.00 ج.م</b></div>
-          <div class="calc-row"><span>مكافئ عيار 24 الصافي</span><b id="kasrFineW" style="color:var(--blue);">0.00 جم</b></div>
+          <div class="calc-row"><span>سعر الجرام (بالعيار المحدد)</span><b id="kasrPrice">0.00 ج.م</b></div>
           <div class="calc-row total"><span>القيمة المستحقة للعميل</span><span id="kasrValue">0.00 ج.م</span></div>
         </div>
-        <label>اسم العميل</label><input id="kasrCustName" placeholder="اسم العميل">
-        <label>رقم الهاتف</label><input id="kasrCustPhone" placeholder="01xxxxxxxxx">
+        <label>اسم العميل</label><input id="kasrCustName">
+        <label>رقم الهاتف</label><input id="kasrCustPhone">
         <button class="btn btn-gold" onclick="saveKasr()">✅ ترحيل للمخزون وصرف القيمة</button>
-        <p style="color:var(--muted);font-size:11px;margin-top:10px;">تُخصم القيمة المالية فوراً من الخزنة كـ مصروف شراء، ويُسجل وزن الذهب صافياً في مخزون الكسر.</p>
+        <p style="color:var(--muted);font-size:11px;margin-top:10px;">تُخصم القيمة تلقائياً من الخزنة (كمصروف)، وتُضاف القطعة لمخزون "الذهب المستعمل" بنفس العيار.</p>
       </div>
       <div class="card glass">
-        <h2>سجل عمليات الذهب الكسر</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>العميل</th>
-              <th>العيار</th>
-              <th>الصافي</th>
-              <th>عيار 24</th>
-              <th>القيمة النقدية</th>
-              <th>التاريخ</th>
-            </tr>
-          </thead>
-          <tbody id="kasrBody"></tbody>
-        </table>
-        <div class="empty" id="kasrEmpty">لا توجد عمليات كسر مسجلة</div>
+        <h2>سجل عمليات الكسر</h2>
+        <table><thead><tr><th>العميل</th><th>العيار</th><th>الوزن الصافي</th><th>القيمة</th><th>التاريخ</th></tr></thead><tbody id="kasrBody"></tbody></table>
+        <div class="empty" id="kasrEmpty">لا توجد عمليات كسر بعد</div>
       </div>
     </div>
   </div>
@@ -210,29 +184,23 @@
     <div class="grid2">
       <div class="card glass">
         <h2>استرجاع قطعة مباعة</h2>
-        <label>ابحث بكود القطعة أو الباركود</label>
-        <input id="retSearch" placeholder="اكتب كود القطعة..." oninput="renderRetResults()">
+        <label>ابحث بكود القطعة</label>
+        <input id="retSearch" placeholder="اكتب الكود..." oninput="renderRetResults()">
         <div id="retResults"></div>
         <div id="retCalcBox" style="display:none;">
           <div class="calc-box">
-            <div class="calc-row"><span>القطعة</span><b id="retItemName">—</b></div>
             <div class="calc-row"><span>الوزن الصافي</span><b id="retWeight">—</b></div>
-            <div class="calc-row"><span>سعر الجرام الحالي</span><b id="retPrice">—</b></div>
-            <div class="calc-row"><span>قيمة الذهب الصافية</span><b id="retGoldVal">—</b></div>
+            <div class="calc-row"><span>سعر الجرام الحالي (وقت الاسترجاع)</span><b id="retPrice">—</b></div>
+            <div class="calc-row"><span>قيمة الذهب (بدون مصنعية)</span><b id="retGoldVal">—</b></div>
             <div class="calc-row total"><span>المبلغ المسترد للعميل</span><span id="retRefund">—</span></div>
           </div>
-          <button class="btn btn-gold" onclick="confirmReturn()">✅ تأكيد الاسترجاع والخصم من الخزنة</button>
-          <p style="color:var(--muted);font-size:11px;margin-top:8px;">تُعاد القطعة فوراً إلى قائمة المخزون المتاح، وتُخصم النقدية المستردة من الخزنة الرئيسية.</p>
+          <button class="btn btn-gold" onclick="confirmReturn()">✅ تأكيد الاسترجاع</button>
+          <p style="color:var(--muted);font-size:11px;margin-top:8px;">يتم خصم المصنعية بالكامل، وإعادة تقييم الذهب بسعر اليوم الحالي وليس سعر يوم الشراء — والمبلغ يُخصم من الخزنة تلقائياً.</p>
         </div>
       </div>
       <div class="card glass">
-        <h2>سجل الاسترجاعات والارتجاع</h2>
-        <table>
-          <thead>
-            <tr><th>الصنف</th><th>الكود</th><th>المبلغ المسترد</th><th>التاريخ</th></tr>
-          </thead>
-          <tbody id="retBody"></tbody>
-        </table>
+        <h2>سجل الاسترجاعات</h2>
+        <table><thead><tr><th>الصنف</th><th>الكود</th><th>المبلغ المسترد</th><th>التاريخ</th></tr></thead><tbody id="retBody"></tbody></table>
         <div class="empty" id="retEmpty">لا توجد عمليات استرجاع بعد</div>
       </div>
     </div>
@@ -244,31 +212,21 @@
       <div class="card glass">
         <h2>حجز قطعة بعربون</h2>
         <label>ابحث عن الصنف المراد حجزه</label>
-        <input id="laySearch" placeholder="اكتب الكود أو اسم الصنف..." oninput="renderLaySearch()">
+        <input id="laySearch" placeholder="اكتب الكود أو الاسم..." oninput="renderLaySearch()">
         <div id="layResults"></div>
         <div id="laySelectedBox" style="display:none;">
-          <div class="calc-box">
-            <div class="calc-row"><span>الصنف المحدد</span><b id="laySelectedName">—</b></div>
-            <div class="calc-row"><span>الوزن الحالي</span><b id="laySelectedW">—</b></div>
-          </div>
-          <label>اسم العميل</label><input id="layCustName" placeholder="اسم العميل">
-          <label>رقم الهاتف</label><input id="layCustPhone" placeholder="01xxxxxxxxx">
-          <label>مبلغ العربون النقدي</label><input id="layDeposit" type="number" step="0.01">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:12px;">
-            <input type="checkbox" id="layLockPrice" style="width:auto;margin:0;"> تثبيت سعر الجرام وقت العربون
-          </label>
+          <div class="calc-box"><div class="calc-row"><span>الصنف المحدد</span><b id="laySelectedName">—</b></div></div>
+          <label>اسم العميل</label><input id="layCustName">
+          <label>رقم الهاتف</label><input id="layCustPhone">
+          <label>مبلغ العربون</label><input id="layDeposit" type="number" step="0.01">
+          <label><input type="checkbox" id="layLockPrice" style="width:auto;display:inline-block;margin-left:6px;"> تثبيت سعر الذهب وقت العربون</label>
           <label>تاريخ التسليم المتوقع</label><input id="layDate" type="date">
-          <button class="btn btn-gold" onclick="saveLayaway()">✅ تأكيد الحجز وتوريد العربون</button>
+          <button class="btn btn-gold" onclick="saveLayaway()">✅ تأكيد الحجز وطباعة الإيصال</button>
         </div>
       </div>
       <div class="card glass">
         <h2>الحجوزات النشطة</h2>
-        <table>
-          <thead>
-            <tr><th>الصنف</th><th>العميل</th><th>العربون</th><th>الحالة</th><th>إجراء</th></tr>
-          </thead>
-          <tbody id="layBody"></tbody>
-        </table>
+        <table><thead><tr><th>الصنف</th><th>العميل</th><th>العربون</th><th>الحالة</th><th></th></tr></thead><tbody id="layBody"></tbody></table>
         <div class="empty" id="layEmpty">لا توجد حجوزات نشطة</div>
       </div>
     </div>
@@ -278,447 +236,258 @@
   <div class="panel" id="panel-repairs">
     <div class="grid2">
       <div class="card glass">
-        <h2>طلب تفصيل / صيانة جديد</h2>
-        <label>اسم العميل</label><input id="repCustName" placeholder="اسم العميل">
-        <label>رقم الهاتف</label><input id="repCustPhone" placeholder="01xxxxxxxxx">
-        <label>وصف الطلب والعمل المطلوب</label>
-        <textarea id="repDesc" rows="2" placeholder="مثال: تفصيل خاتم باسم، تصليح مقاس، تلحيم سلسلة..."></textarea>
+        <h2>استلام طلب تفصيل / صيانة</h2>
+        <label>اسم العميل</label><input id="repCustName">
+        <label>رقم الهاتف</label><input id="repCustPhone">
+        <label>وصف الطلب</label><textarea id="repDesc" rows="2" placeholder="مثال: تفصيل خاتم اسم، أو تصليح سلسلة مقطوعة"></textarea>
         <label>الوزن التقديري (جرام)</label><input id="repWeight" type="number" step="0.01">
-        <label>اسم الورشة / الفني</label>
-        <input list="workshopList" id="repWorkshop" placeholder="اختر من القائمة أو اكتب اسم ورشة">
+        <label>الورشة</label>
+        <input list="workshopList" id="repWorkshop" placeholder="اختر من القائمة أو اكتب اسم ورشة جديدة">
         <datalist id="workshopList"></datalist>
         <label>تاريخ التسليم المتوقع</label><input id="repDate" type="date">
-        <label>مبلغ العربون النقدي (اختياري)</label><input id="repDeposit" type="number" step="0.01" value="0">
-        <button class="btn btn-gold" onclick="saveRepair()">✅ تسجيل الطلب وتوريد العربون</button>
+        <label>مبلغ العربون (اختياري)</label><input id="repDeposit" type="number" step="0.01" value="0">
+        <button class="btn btn-gold" onclick="saveRepair()">✅ تسجيل الطلب</button>
       </div>
       <div class="card glass">
-        <h2>سجل طلبات الصيانة والتفصيل</h2>
-        <table>
-          <thead>
-            <tr><th>العميل</th><th>الوصف</th><th>الورشة</th><th>الحالة</th><th>تغيير الحالة</th></tr>
-          </thead>
-          <tbody id="repBody"></tbody>
-        </table>
-        <div class="empty" id="repEmpty">لا توجد طلبات صيانة أو تفصيل حالية</div>
+        <h2>الطلبات الحالية</h2>
+        <table><thead><tr><th>العميل</th><th>الوصف</th><th>الورشة</th><th>الحالة</th><th></th></tr></thead><tbody id="repBody"></tbody></table>
+        <div class="empty" id="repEmpty">لا توجد طلبات تفصيل أو صيانة بعد</div>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-function showToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(()=> t.classList.remove('show'), 3400);
-}
+/* DB engine now comes from firestore-db.js (loaded in <head>) — shared live data for every user. */
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3400); }
 
 let DATA = { inventory:[], invoices:[], safe:[], kasr:[], returns:[], layaway:[], repairs:[], settings:{} };
 let BASE_PRICE_21 = 3850;
-
-function pricePerGram(karat){
-  return +((BASE_PRICE_21 * (karat / 21))).toFixed(2);
-}
+function pricePerGram(k){ return +(BASE_PRICE_21*(k/21)).toFixed(2); }
 
 async function afterConnect(){
-  document.getElementById('gateScreen').style.display = 'none';
-  document.getElementById('appScreen').style.display = 'block';
-
+  document.getElementById('gateScreen').style.display='none';
+  document.getElementById('appScreen').style.display='block';
   DATA.inventory = await DB.read('inventory', []);
-  DATA.invoices  = await DB.read('invoices', []);
-  DATA.safe      = await DB.read('safe', []);
-  DATA.kasr      = await DB.read('old_gold', []);
-  DATA.returns   = await DB.read('returns', []);
-  DATA.layaway   = await DB.read('layaway', []);
-  DATA.repairs   = await DB.read('repairs', []);
-  
+  DATA.invoices = await DB.read('invoices', []);
+  DATA.safe = await DB.read('safe', []);
+  DATA.kasr = await DB.read('old_gold', []);
+  DATA.returns = await DB.read('returns', []);
+  DATA.layaway = await DB.read('layaway', []);
+  DATA.repairs = await DB.read('repairs', []);
   const settings = await DB.read('settings', {});
   if(settings.basePrice21) BASE_PRICE_21 = settings.basePrice21;
 
   renderAll();
 }
+(async function boot(){ const ok = await DB.tryAutoConnect(); if(ok) afterConnect(); })();
 
-(async function boot(){
-  const ok = await DB.tryAutoConnect();
-  if(ok) afterConnect();
-})();
-
-// Tab Navigation logic
 document.querySelectorAll('.tab').forEach(t=>{
   t.addEventListener('click', ()=>{
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
     document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-    t.classList.add('active');
-    document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+    t.classList.add('active'); document.getElementById('panel-'+t.dataset.tab).classList.add('active');
   });
 });
 
-function renderAll(){
-  renderKasr();
-  renderReturns();
-  renderLayaway();
-  renderRepairs();
-  renderWorkshopList();
-}
+function renderAll(){ renderKasr(); renderReturns(); renderLayaway(); renderRepairs(); renderWorkshopList(); }
 
 /* ============ OLD GOLD (KASR) ============ */
 function calcKasr(){
-  const gross  = parseFloat(document.getElementById('kasrGross').value) || 0;
-  const deduct = parseFloat(document.getElementById('kasrDeduct').value) || 0;
-  const karat  = parseInt(document.getElementById('kasrKarat').value, 10);
-  
-  const net = Math.max(0, gross - deduct);
+  const gross = parseFloat(document.getElementById('kasrGross').value)||0;
+  const deduct = parseFloat(document.getElementById('kasrDeduct').value)||0;
+  const karat = parseInt(document.getElementById('kasrKarat').value,10);
+  const net = Math.max(0, gross-deduct);
   const price = pricePerGram(karat);
-  const value = net * price;
-  const fineW = net * (karat / 24);
-
-  document.getElementById('kasrNet').textContent   = net.toFixed(2) + ' جم';
-  document.getElementById('kasrPrice').textContent = price.toFixed(2) + ' ج.م';
-  document.getElementById('kasrFineW').textContent = fineW.toFixed(2) + ' جم';
-  document.getElementById('kasrValue').textContent = value.toFixed(2) + ' ج.م';
+  const value = net*price;
+  document.getElementById('kasrNet').textContent = net.toFixed(2)+' جم';
+  document.getElementById('kasrPrice').textContent = price.toFixed(2)+' ج.م';
+  document.getElementById('kasrValue').textContent = value.toFixed(2)+' ج.م';
 }
 calcKasr();
 
 async function saveKasr(){
-  const gross  = parseFloat(document.getElementById('kasrGross').value) || 0;
-  const deduct = parseFloat(document.getElementById('kasrDeduct').value) || 0;
-  const karat  = parseInt(document.getElementById('kasrKarat').value, 10);
-  const net    = Math.max(0, gross - deduct);
-  const price  = pricePerGram(karat);
-  const value  = +(net * price).toFixed(2);
-  const fineW  = +(net * (karat / 24)).toFixed(2);
-  const custName  = document.getElementById('kasrCustName').value.trim();
+  const gross = parseFloat(document.getElementById('kasrGross').value)||0;
+  const deduct = parseFloat(document.getElementById('kasrDeduct').value)||0;
+  const karat = parseInt(document.getElementById('kasrKarat').value,10);
+  const net = Math.max(0, gross-deduct);
+  const price = pricePerGram(karat);
+  const value = +(net*price).toFixed(2);
+  const custName = document.getElementById('kasrCustName').value.trim();
   const custPhone = document.getElementById('kasrCustPhone').value.trim();
+  if(!net){ showToast('أدخل الوزن'); return; }
 
-  if(!net){ showToast('يرجى تحديد وزن الذهب بشكل صحيح'); return; }
-
-  // 1. إضافة القطعة إلى مخزون الكسر/الذهب المستعمل
-  DATA.inventory.push({
-    id: 'inv_' + Date.now(),
-    name: 'ذهب مستعمل (كسر) - عيار ' + karat,
-    code: 'KASR' + Date.now().toString().slice(-8),
-    karat: karat,
-    netW: net,
-    grossW: gross,
-    fineW: fineW,
-    feeRetail: 0,
-    feeWholesale: 0,
-    status: 'available',
-    category: 'old_gold',
-    addedAt: Date.now()
-  });
+  DATA.inventory.push({ id:'inv_'+Date.now(), name:'ذهب مستعمل (كسر) - عيار '+karat, code:'KASR'+Date.now().toString().slice(-8),
+    karat, netW:net, grossW:gross, feeRetail:0, feeWholesale:0, supplierId:'', goldsmithId:'', status:'available',
+    category:'old_gold', addedAt:Date.now() });
   await DB.write('inventory', DATA.inventory);
 
-  // 2. تسجيل العملية النقدية فوراً بالخزنة كـ مصروف شراء ذهب
-  DATA.safe.push({
-    id: 'sfx_' + Date.now(),
-    type: 'expense',
-    amount: value,
-    desc: 'شراء ذهب كسر من: ' + (custName || 'عميل غير مسجل'),
-    at: Date.now()
-  });
+  DATA.safe.push({ id:'sfx_'+Date.now(), type:'expense', amount:value, desc:'شراء ذهب كسر من: '+(custName||'عميل'), at:Date.now() });
   await DB.write('safe', DATA.safe);
 
-  // 3. حفظ سجل حركة شراء الكسر
-  DATA.kasr.push({
-    id: 'kasr_' + Date.now(),
-    custName,
-    custPhone,
-    karat,
-    net,
-    gross,
-    fineW,
-    value,
-    at: Date.now()
-  });
+  DATA.kasr.push({ id:'kasr_'+Date.now(), custName, custPhone, karat, net, gross, value, at:Date.now() });
   await DB.write('old_gold', DATA.kasr);
 
-  ['kasrGross', 'kasrDeduct', 'kasrCustName', 'kasrCustPhone'].forEach(id => document.getElementById(id).value = '');
-  calcKasr();
-  renderKasr();
-  showToast('تم ترحيل الكسر للمخزون وصرف المبلغ النقدي من الخزنة بنجاح');
+  ['kasrGross','kasrDeduct','kasrCustName','kasrCustPhone'].forEach(id=>document.getElementById(id).value='');
+  calcKasr(); renderKasr();
+  showToast('تم ترحيل الكسر للمخزون وصرف القيمة من الخزنة');
 }
-
 function renderKasr(){
-  document.getElementById('kasrEmpty').style.display = DATA.kasr.length ? 'none' : 'block';
-  document.getElementById('kasrBody').innerHTML = [...DATA.kasr].reverse().map(k => `
-    <tr>
-      <td>${k.custName || '—'}</td>
-      <td>عيار ${k.karat}</td>
-      <td>${k.net.toFixed(2)} جم</td>
-      <td>${(k.fineW || 0).toFixed(2)} جم</td>
-      <td style="color:var(--gold-1);font-weight:700;">${k.value.toFixed(2)} ج.م</td>
-      <td style="color:var(--muted);">${new Date(k.at).toLocaleDateString('ar-EG')}</td>
-    </tr>
+  document.getElementById('kasrEmpty').style.display = DATA.kasr.length?'none':'block';
+  document.getElementById('kasrBody').innerHTML = [...DATA.kasr].reverse().map(k=>`
+    <tr><td>${k.custName||'—'}</td><td>${k.karat}</td><td>${k.net.toFixed(2)} جم</td><td>${k.value.toFixed(2)} ج.م</td><td style="color:var(--muted);">${new Date(k.at).toLocaleDateString('ar-EG')}</td></tr>
   `).join('');
 }
 
 /* ============ RETURNS ============ */
 let retSelected = null;
-
 function renderRetResults(){
   const q = document.getElementById('retSearch').value.trim();
   const box = document.getElementById('retResults');
-  document.getElementById('retCalcBox').style.display = 'none';
-  if(q.length < 2){ box.innerHTML = ''; return; }
-
-  const matches = DATA.inventory.filter(i => i.status === 'sold' && (i.code.includes(q) || i.name.includes(q))).slice(0, 6);
-  box.innerHTML = matches.map(i => `
-    <div class="sr-item" onclick="selectReturn('${i.id}')">
-      <span>${i.name}</span>
-      <span style="color:var(--muted);font-family:monospace;">${i.code}</span>
-    </div>
-  `).join('') || '<div class="empty">لا توجد قطع مباعة تطابق البحث</div>';
+  document.getElementById('retCalcBox').style.display='none';
+  if(q.length<2){ box.innerHTML=''; return; }
+  const matches = DATA.inventory.filter(i=>i.status==='sold' && i.code.includes(q)).slice(0,6);
+  box.innerHTML = matches.map(i=>`<div class="sr-item" onclick="selectReturn('${i.id}')"><span>${i.name}</span><span style="color:var(--muted);font-family:ui-monospace,Menlo,monospace;">${i.code}</span></div>`).join('') || '<div class="empty">لا توجد قطعة مباعة بهذا الكود</div>';
 }
-
 function selectReturn(id){
-  retSelected = DATA.inventory.find(i => i.id === id);
-  if(!retSelected) return;
-
+  retSelected = DATA.inventory.find(i=>i.id===id);
   const price = pricePerGram(retSelected.karat);
-  const goldVal = retSelected.netW * price;
-
-  document.getElementById('retItemName').textContent = retSelected.name;
-  document.getElementById('retWeight').textContent = retSelected.netW.toFixed(2) + ' جم';
-  document.getElementById('retPrice').textContent = price.toFixed(2) + ' ج.م';
-  document.getElementById('retGoldVal').textContent = goldVal.toFixed(2) + ' ج.م';
-  document.getElementById('retRefund').textContent = goldVal.toFixed(2) + ' ج.م';
-  document.getElementById('retCalcBox').style.display = 'block';
+  const goldVal = retSelected.netW*price;
+  document.getElementById('retWeight').textContent = retSelected.netW.toFixed(2)+' جم';
+  document.getElementById('retPrice').textContent = price.toFixed(2)+' ج.م';
+  document.getElementById('retGoldVal').textContent = goldVal.toFixed(2)+' ج.م';
+  document.getElementById('retRefund').textContent = goldVal.toFixed(2)+' ج.م';
+  document.getElementById('retCalcBox').style.display='block';
 }
-
 async function confirmReturn(){
   if(!retSelected) return;
   const price = pricePerGram(retSelected.karat);
-  const refund = +(retSelected.netW * price).toFixed(2);
+  const refund = +(retSelected.netW*price).toFixed(2);
 
-  // إرجاع القطعة للمخزون
-  retSelected.status = 'available';
+  retSelected.status = 'available'; // back to stock
   await DB.write('inventory', DATA.inventory);
 
-  // الخصم من الخزنة
-  DATA.safe.push({
-    id: 'sfx_' + Date.now(),
-    type: 'expense',
-    amount: refund,
-    desc: 'استرجاع واستعادة قطعة: ' + retSelected.name + ' (' + retSelected.code + ')',
-    at: Date.now()
-  });
+  DATA.safe.push({ id:'sfx_'+Date.now(), type:'expense', amount:refund, desc:'استرجاع قطعة: '+retSelected.name, at:Date.now() });
   await DB.write('safe', DATA.safe);
 
-  // سجل المرتجعات
-  DATA.returns.push({
-    id: 'ret_' + Date.now(),
-    itemName: retSelected.name,
-    code: retSelected.code,
-    refund,
-    at: Date.now()
-  });
+  DATA.returns.push({ id:'ret_'+Date.now(), itemName:retSelected.name, code:retSelected.code, refund, at:Date.now() });
   await DB.write('returns', DATA.returns);
 
-  document.getElementById('retSearch').value = '';
-  document.getElementById('retResults').innerHTML = '';
-  document.getElementById('retCalcBox').style.display = 'none';
-  retSelected = null;
+  document.getElementById('retSearch').value=''; document.getElementById('retResults').innerHTML='';
+  document.getElementById('retCalcBox').style.display='none';
+  retSelected=null;
   renderReturns();
-  showToast('تم إعادة القطعة للمخزون المتاح وخصم القيمة المالية من الخزنة');
+  showToast('تم الاسترجاع وخصم المبلغ من الخزنة وإعادة القطعة للمخزون');
 }
-
 function renderReturns(){
-  document.getElementById('retEmpty').style.display = DATA.returns.length ? 'none' : 'block';
-  document.getElementById('retBody').innerHTML = [...DATA.returns].reverse().map(r => `
-    <tr>
-      <td>${r.itemName}</td>
-      <td style="font-family:monospace;">${r.code}</td>
-      <td style="color:var(--red);font-weight:700;">${r.refund.toFixed(2)} ج.م</td>
-      <td style="color:var(--muted);">${new Date(r.at).toLocaleDateString('ar-EG')}</td>
-    </tr>
+  document.getElementById('retEmpty').style.display = DATA.returns.length?'none':'block';
+  document.getElementById('retBody').innerHTML = [...DATA.returns].reverse().map(r=>`
+    <tr><td>${r.itemName}</td><td style="font-family:ui-monospace,Menlo,monospace;">${r.code}</td><td>${r.refund.toFixed(2)} ج.م</td><td style="color:var(--muted);">${new Date(r.at).toLocaleDateString('ar-EG')}</td></tr>
   `).join('');
 }
 
 /* ============ LAYAWAY ============ */
 let laySelected = null;
-
 function renderLaySearch(){
   const q = document.getElementById('laySearch').value.trim();
   const box = document.getElementById('layResults');
-  document.getElementById('laySelectedBox').style.display = 'none';
-  if(q.length < 2){ box.innerHTML = ''; return; }
-
-  const matches = DATA.inventory.filter(i => i.status === 'available' && (i.code.includes(q) || i.name.includes(q))).slice(0, 6);
-  box.innerHTML = matches.map(i => `
-    <div class="sr-item" onclick="selectLayaway('${i.id}')">
-      <span>${i.name}</span>
-      <span style="color:var(--muted);font-family:monospace;">${i.code}</span>
-    </div>
-  `).join('') || '<div class="empty">لا توجد قطع متاحة للحجز بهذا الاسم</div>';
+  document.getElementById('laySelectedBox').style.display='none';
+  if(q.length<2){ box.innerHTML=''; return; }
+  const matches = DATA.inventory.filter(i=>i.status==='available' && (i.code.includes(q)||i.name.includes(q))).slice(0,6);
+  box.innerHTML = matches.map(i=>`<div class="sr-item" onclick="selectLayaway('${i.id}')"><span>${i.name}</span><span style="color:var(--muted);font-family:ui-monospace,Menlo,monospace;">${i.code}</span></div>`).join('') || '<div class="empty">لا توجد نتائج</div>';
 }
-
 function selectLayaway(id){
-  laySelected = DATA.inventory.find(i => i.id === id);
-  if(!laySelected) return;
-
-  document.getElementById('laySelectedName').textContent = laySelected.name + ' (' + laySelected.code + ')';
-  document.getElementById('laySelectedW').textContent = laySelected.netW.toFixed(2) + ' جم (عيار ' + laySelected.karat + ')';
-  document.getElementById('laySelectedBox').style.display = 'block';
+  laySelected = DATA.inventory.find(i=>i.id===id);
+  document.getElementById('laySelectedName').textContent = laySelected.name + ' — ' + laySelected.code;
+  document.getElementById('laySelectedBox').style.display='block';
 }
-
 async function saveLayaway(){
   if(!laySelected) return;
-  const custName  = document.getElementById('layCustName').value.trim();
+  const custName = document.getElementById('layCustName').value.trim();
   const custPhone = document.getElementById('layCustPhone').value.trim();
-  const deposit   = parseFloat(document.getElementById('layDeposit').value) || 0;
+  const deposit = parseFloat(document.getElementById('layDeposit').value)||0;
   const lockPrice = document.getElementById('layLockPrice').checked;
-  const date      = document.getElementById('layDate').value;
+  const date = document.getElementById('layDate').value;
+  if(!custName || !deposit){ showToast('أدخل اسم العميل ومبلغ العربون'); return; }
 
-  if(!custName || !deposit){ showToast('يرجى إدخال اسم العميل ومبلغ العربون'); return; }
-
-  // تحديث حالة القطعة إلى محجوزة
   laySelected.status = 'reserved';
   await DB.write('inventory', DATA.inventory);
 
-  // إدخال العربون الخزنة
-  DATA.safe.push({
-    id: 'sfx_' + Date.now(),
-    type: 'income',
-    amount: deposit,
-    desc: 'عربون حجز قطعة: ' + laySelected.name + ' للعميل ' + custName,
-    at: Date.now()
-  });
+  DATA.safe.push({ id:'sfx_'+Date.now(), type:'income', amount:deposit, desc:'عربون حجز: '+laySelected.name, at:Date.now() });
   await DB.write('safe', DATA.safe);
 
   const lockedPrice = lockPrice ? pricePerGram(laySelected.karat) : null;
-  DATA.layaway.push({
-    id: 'lay_' + Date.now(),
-    itemId: laySelected.id,
-    itemName: laySelected.name,
-    custName,
-    custPhone,
-    deposit,
-    lockedPrice,
-    deliveryDate: date,
-    status: 'reserved',
-    at: Date.now()
-  });
+  DATA.layaway.push({ id:'lay_'+Date.now(), itemId:laySelected.id, itemName:laySelected.name, custName, custPhone, deposit, lockedPrice, deliveryDate:date, status:'reserved', at:Date.now() });
   await DB.write('layaway', DATA.layaway);
 
-  ['layCustName', 'layCustPhone', 'layDeposit', 'layDate'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('layLockPrice').checked = false;
-  laySelected = null;
-  document.getElementById('laySelectedBox').style.display = 'none';
-  document.getElementById('layResults').innerHTML = '';
-  document.getElementById('laySearch').value = '';
-
+  ['layCustName','layCustPhone','layDeposit','layDate'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('layLockPrice').checked=false;
+  laySelected=null; document.getElementById('laySelectedBox').style.display='none';
+  document.getElementById('layResults').innerHTML=''; document.getElementById('laySearch').value='';
   renderLayaway();
-  showToast('تم حجز القطعة وتوريد العربون بنجاح للخزنة');
+  showToast('تم تأكيد الحجز والقطعة محجوزة الآن من المخزون');
 }
-
 async function completeLayaway(id){
-  const lay = DATA.layaway.find(l => l.id === id);
-  if(!lay) return;
-
-  const item = DATA.inventory.find(i => i.id === lay.itemId);
+  const lay = DATA.layaway.find(l=>l.id===id);
+  const item = DATA.inventory.find(i=>i.id===lay.itemId);
   if(item) item.status = 'sold';
-  
   lay.status = 'completed';
-
   await DB.write('inventory', DATA.inventory);
   await DB.write('layaway', DATA.layaway);
   renderLayaway();
-  showToast('تم تسليم القطعة المحجوزة نهائياً للعميل');
+  showToast('تم تسليم القطعة نهائياً للعميل');
 }
-
 function renderLayaway(){
-  document.getElementById('layEmpty').style.display = DATA.layaway.length ? 'none' : 'block';
-  document.getElementById('layBody').innerHTML = [...DATA.layaway].reverse().map(l => `
-    <tr>
-      <td>${l.itemName}</td>
-      <td>${l.custName}</td>
-      <td style="color:var(--green);font-weight:700;">${l.deposit.toFixed(2)} ج.م</td>
-      <td><span class="status-pill ${l.status}">${l.status === 'reserved' ? 'محجوز' : 'تم التسليم'}</span></td>
-      <td>
-        ${l.status === 'reserved' ? `<button class="btn btn-gold btn-sm" onclick="completeLayaway('${l.id}')">تسليم نهائي</button>` : '—'}
-      </td>
-    </tr>
+  document.getElementById('layEmpty').style.display = DATA.layaway.length?'none':'block';
+  document.getElementById('layBody').innerHTML = [...DATA.layaway].reverse().map(l=>`
+    <tr><td>${l.itemName}</td><td>${l.custName}</td><td>${l.deposit.toFixed(2)} ج.م</td>
+    <td><span class="status-pill ${l.status}">${l.status==='reserved'?'محجوز':'تم التسليم'}</span></td>
+    <td>${l.status==='reserved' ? `<button class="btn btn-gold btn-sm" onclick="completeLayaway('${l.id}')">تسليم نهائي</button>` : ''}</td></tr>
   `).join('');
 }
 
 /* ============ REPAIRS / CUSTOM ORDERS ============ */
 function renderWorkshopList(){
-  const workshops = [...new Set(DATA.repairs.map(r => r.workshop).filter(Boolean))];
-  document.getElementById('workshopList').innerHTML = workshops.map(w => `<option value="${w}">`).join('');
+  const workshops = [...new Set(DATA.repairs.map(r=>r.workshop).filter(Boolean))];
+  document.getElementById('workshopList').innerHTML = workshops.map(w=>`<option value="${w}">`).join('');
 }
-
 async function saveRepair(){
-  const custName  = document.getElementById('repCustName').value.trim();
+  const custName = document.getElementById('repCustName').value.trim();
   const custPhone = document.getElementById('repCustPhone').value.trim();
-  const desc      = document.getElementById('repDesc').value.trim();
-  const weight    = parseFloat(document.getElementById('repWeight').value) || 0;
-  const workshop  = document.getElementById('repWorkshop').value.trim();
-  const date      = document.getElementById('repDate').value;
-  const deposit   = parseFloat(document.getElementById('repDeposit').value) || 0;
+  const desc = document.getElementById('repDesc').value.trim();
+  const weight = parseFloat(document.getElementById('repWeight').value)||0;
+  const workshop = document.getElementById('repWorkshop').value.trim();
+  const date = document.getElementById('repDate').value;
+  const deposit = parseFloat(document.getElementById('repDeposit').value)||0;
+  if(!custName || !desc){ showToast('أدخل اسم العميل ووصف الطلب'); return; }
 
-  if(!custName || !desc){ showToast('أدخل اسم العميل ووصف التفصيل/الصيانة'); return; }
-
-  if(deposit > 0){
-    DATA.safe.push({
-      id: 'sfx_' + Date.now(),
-      type: 'income',
-      amount: deposit,
-      desc: 'عربون تفصيل/صيانة من العميل: ' + custName,
-      at: Date.now()
-    });
+  if(deposit>0){
+    DATA.safe.push({ id:'sfx_'+Date.now(), type:'income', amount:deposit, desc:'عربون تفصيل/صيانة: '+custName, at:Date.now() });
     await DB.write('safe', DATA.safe);
   }
-
-  DATA.repairs.push({
-    id: 'rep_' + Date.now(),
-    custName,
-    custPhone,
-    desc,
-    weight,
-    workshop,
-    date,
-    deposit,
-    status: 'received',
-    at: Date.now()
-  });
+  DATA.repairs.push({ id:'rep_'+Date.now(), custName, custPhone, desc, weight, workshop, date, deposit, status:'received', at:Date.now() });
   await DB.write('repairs', DATA.repairs);
 
-  ['repCustName', 'repCustPhone', 'repDesc', 'repWeight', 'repWorkshop', 'repDate'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('repDeposit').value = '0';
-  
-  renderRepairs();
-  renderWorkshopList();
-  showToast('تم تسجيل طلب التفصيل/الصيانة وتوريد العربون');
+  ['repCustName','repCustPhone','repDesc','repWeight','repWorkshop','repDate'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('repDeposit').value='0';
+  renderRepairs(); renderWorkshopList();
+  showToast('تم تسجيل طلب التفصيل/الصيانة');
 }
-
-const REP_STATUSES = ['received', 'workshop', 'ready', 'delivered'];
-const REP_LABELS   = { received: 'تم الاستلام', workshop: 'في الورشة', ready: 'جاهز للتسليم', delivered: 'تم التسليم' };
-
+const REP_STATUSES = ['received','workshop','ready','delivered'];
+const REP_LABELS = {received:'تم الاستلام', workshop:'في الورشة', ready:'جاهز للتسليم', delivered:'تم التسليم'};
 async function advanceRepair(id){
-  const r = DATA.repairs.find(x => x.id === id);
-  if(!r) return;
+  const r = DATA.repairs.find(x=>x.id===id);
   const idx = REP_STATUSES.indexOf(r.status);
-  if(idx < REP_STATUSES.length - 1){
-    r.status = REP_STATUSES[idx + 1];
-    await DB.write('repairs', DATA.repairs);
-    renderRepairs();
-    showToast('تم تحديث حالة الطلب إلى: ' + REP_LABELS[r.status]);
-  }
+  if(idx < REP_STATUSES.length-1) r.status = REP_STATUSES[idx+1];
+  await DB.write('repairs', DATA.repairs);
+  renderRepairs();
 }
-
 function renderRepairs(){
-  document.getElementById('repEmpty').style.display = DATA.repairs.length ? 'none' : 'block';
-  document.getElementById('repBody').innerHTML = [...DATA.repairs].reverse().map(r => `
-    <tr>
-      <td>${r.custName}</td>
-      <td>${r.desc}</td>
-      <td>${r.workshop || '—'}</td>
-      <td><span class="status-pill ${r.status}">${REP_LABELS[r.status]}</span></td>
-      <td>
-        ${r.status !== 'delivered' ? `<button class="btn btn-gold btn-sm" onclick="advanceRepair('${r.id}')">الحالة التالية</button>` : '—'}
-      </td>
-    </tr>
+  document.getElementById('repEmpty').style.display = DATA.repairs.length?'none':'block';
+  document.getElementById('repBody').innerHTML = [...DATA.repairs].reverse().map(r=>`
+    <tr><td>${r.custName}</td><td>${r.desc}</td><td>${r.workshop||'—'}</td>
+    <td><span class="status-pill ${r.status}">${REP_LABELS[r.status]}</span></td>
+    <td>${r.status!=='delivered' ? `<button class="btn btn-gold btn-sm" onclick="advanceRepair('${r.id}')">الحالة التالية</button>` : ''}</td></tr>
   `).join('');
 }
 </script>
