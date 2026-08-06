@@ -103,13 +103,14 @@
   .hn-qn-menu a{ display:block; padding:10px 12px; border-radius:10px; color:var(--cream); text-decoration:none; font-size:13px; transition:background .15s; }
   .hn-qn-menu a:hover{ background:rgba(255,255,255,0.06); color:var(--gold-1); }
   @media(max-width:640px){ .hn-qn{ top:10px; left:10px; } .hn-qn-btn{ padding:9px 13px; font-size:11.5px; } }
+
 </style>
 
   <!-- مكتبات فايربيس وملف أمان الترخيص -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="license-guard.js"></script>
-  <script src="firestore-db.js"></script>
+<script src="firestore-db.js"></script>
 
   <!-- قراءة الباركود من الكاميرا -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
@@ -154,7 +155,7 @@
     <a href="hassan-nassar-jewelry-03-data-core.html">📦 المخزون · العملاء · الموردين</a>
     <a href="hassan-nassar-jewelry-05-barcode-reports.html">🖨️ الباركود والتقارير</a>
     <a href="hassan-nassar-jewelry-06-settings-users.html">⚙️ الإعدادات والمستخدمين</a>
-    <a href="hassan-nassar-jewelry-07-transactions.html">♻️ الكسر واسترجاع والحجز</a>
+    <a href="hassan-nassar-jewelry-07-transactions.html">♻️ الكسر والاسترجاع والحجز</a>
     <a href="hassan-nassar-jewelry-08-finance-final.html">💵 المصروفات والمقاصة</a>
   </div>
 </div>
@@ -360,6 +361,9 @@
 </div>
 
 <script>
+/* DB engine now comes from firestore-db.js (loaded in <head>) — shared live data for every user.
+   DB.pickFolder() still works here as an OPTIONAL local backup-folder chooser (not required to connect). */
+
 function showToast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
@@ -367,7 +371,7 @@ function showToast(msg){
 }
 
 /* =========================================================
-   BOOT & STATE
+   BOOT
 ========================================================= */
 let DATA = { inventory:[], customers:[], suppliers:[], safe:[], goldsmiths:[], goldsmithTx:[] };
 
@@ -375,7 +379,7 @@ async function afterConnect(){
   document.getElementById('gateScreen').style.display = 'none';
   document.getElementById('appScreen').style.display = 'block';
   document.getElementById('dbStatusText').textContent =
-    (typeof SHOP_NAME !== 'undefined' ? ('متصل بفولدر: ' + SHOP_NAME) : 'متصل بالسيرفر والتخزين المحمي');
+    DB.supported ? ('متصل بفولدر: ' + SHOP_NAME) : 'متصل بتخزين داخلي محمي (وضع بديل)';
   document.getElementById('dbDot').className = 'dot ok';
 
   DATA.inventory = await DB.read('inventory', []);
@@ -412,12 +416,10 @@ const KARATS = [24,21,18,14,12,9,999,925,800];
 function isSilver(k){ return k >= 800; }
 function karatLabel(k){ return isSilver(k) ? ('فضة ' + k) : ('عيار ' + k); }
 let activeKarat = 21;
-
 function renderKaratTabs(){
   const wrap = document.getElementById('karatTabs');
   wrap.innerHTML = KARATS.map(k=>`<div class="karat-pill ${k===activeKarat?'active':''}" style="${isSilver(k)?'border-color:rgba(200,200,210,0.35);':''}" onclick="setKarat(${k})">${karatLabel(k)}</div>`).join('');
 }
-
 function setKarat(k){ activeKarat = k; renderKaratTabs(); renderInventory(); }
 
 function refreshSupplierGoldsmithSelects(){
@@ -426,26 +428,22 @@ function refreshSupplierGoldsmithSelects(){
   const gsSel = document.getElementById('invGoldsmith');
   gsSel.innerHTML = '<option value="">— بدون —</option>' + DATA.goldsmiths.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
   const gsTxSel = document.getElementById('gsTxWho');
-  if(gsTxSel){
-    gsTxSel.innerHTML = DATA.goldsmiths.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
-  }
+  gsTxSel.innerHTML = DATA.goldsmiths.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
 }
 
+/* مسح باركود صنف جديد بالكاميرا: بيملي حقل الكود تلقائياً، ولو الكود مستخدم
+   قبل كده بيبلّغك فوراً بدل ما تكتشف بعد الحفظ */
 function scanInventoryBarcode(){
-  if(typeof HNScanner !== 'undefined'){
-    HNScanner.open((code)=>{
-      document.getElementById('invCode').value = code;
-      const exists = DATA.inventory.find(i=>i.code===code);
-      if(exists){
-        showToast('⚠️ هذا الباركود مسجّل بالفعل لصنف: ' + exists.name);
-      } else {
-        showToast('تم قراءة الباركود ✅ — كمّل باقي بيانات الصنف واضغط "إضافة للمخزون"');
-        document.getElementById('invName').focus();
-      }
-    }, {title:'مسح باركود صنف جديد'});
-  } else {
-    showToast('قارئ الباركود غير جاهز حالياً');
-  }
+  HNScanner.open((code)=>{
+    document.getElementById('invCode').value = code;
+    const exists = DATA.inventory.find(i=>i.code===code);
+    if(exists){
+      showToast('⚠️ هذا الباركود مسجّل بالفعل لصنف: ' + exists.name);
+    } else {
+      showToast('تم قراءة الباركود ✅ — كمّل باقي بيانات الصنف واضغط "إضافة للمخزون"');
+      document.getElementById('invName').focus();
+    }
+  }, {title:'مسح باركود صنف جديد'});
 }
 
 async function addInventoryItem(){
@@ -468,6 +466,7 @@ async function addInventoryItem(){
   });
   await DB.write('inventory', DATA.inventory);
 
+  // goldsmith balance auto-updates when a new piece is linked to him
   if(goldsmithId){
     DATA.goldsmithTx.push({ id:'gtx_'+Date.now(), goldsmithId, type:'add', grams:netW, note:'قطعة جديدة: '+name, at:Date.now() });
     await DB.write('goldsmith_tx', DATA.goldsmithTx);
@@ -496,7 +495,6 @@ function renderInventory(){
     </tr>`;
   }).join('');
 }
-
 async function deleteInventory(id){
   DATA.inventory = DATA.inventory.filter(i=>i.id!==id);
   await DB.write('inventory', DATA.inventory);
@@ -511,7 +509,6 @@ function lookupCustomer(){
   const found = DATA.customers.find(c=>c.phone === phone);
   if(found) document.getElementById('custName').value = found.name;
 }
-
 async function addCustomer(){
   const phone = document.getElementById('custPhone').value.trim();
   const name = document.getElementById('custName').value.trim();
@@ -529,7 +526,6 @@ async function addCustomer(){
   renderCustomers();
   showToast('تم حفظ بيانات العميل تلقائياً');
 }
-
 function renderCustomers(){
   document.getElementById('custCount').textContent = `(${DATA.customers.length})`;
   document.getElementById('custEmpty').style.display = DATA.customers.length ? 'none' : 'block';
@@ -553,7 +549,6 @@ function lookupSupplier(){
     document.getElementById('supNotes').value = found.notes || '';
   }
 }
-
 async function addSupplier(){
   const company = document.getElementById('supCompany').value.trim();
   const contact = document.getElementById('supContact').value.trim();
@@ -573,7 +568,6 @@ async function addSupplier(){
   refreshSupplierGoldsmithSelects(); renderSuppliers();
   showToast(existing ? 'تم تحديث بيانات المورد الموجود' : 'تمت إضافة المورد الجديد');
 }
-
 function renderSuppliers(){
   document.getElementById('supCount').textContent = `(${DATA.suppliers.length})`;
   document.getElementById('supEmpty').style.display = DATA.suppliers.length ? 'none' : 'block';
@@ -588,46 +582,26 @@ function renderSuppliers(){
 ========================================================= */
 async function addSafeTx(){
   const type = document.getElementById('safeType').value;
-  const amount = parseFloat(document.getElementById('safeAmount').value) || 0;
+  const amount = parseFloat(document.getElementById('safeAmount').value);
   const desc = document.getElementById('safeDesc').value.trim();
+  if(!amount || amount<=0 || !desc){ showToast('أدخل المبلغ والبيان'); return; }
 
-  if(!amount || amount <= 0){ showToast('أدخل مبلغًا صحيحًا أكبر من الصفر'); return; }
-  if(!desc){ showToast('أدخل بيان الحركة (سبب الإيراد/المصروف)'); return; }
-
-  DATA.safe.push({
-    id: 'stx_' + Date.now(),
-    type,
-    amount,
-    desc,
-    at: Date.now()
-  });
-
+  DATA.safe.push({ id:'sfx_'+Date.now(), type, amount, desc, at: Date.now() });
   await DB.write('safe', DATA.safe);
-  document.getElementById('safeAmount').value = '';
-  document.getElementById('safeDesc').value = '';
+  document.getElementById('safeAmount').value=''; document.getElementById('safeDesc').value='';
   renderSafe();
-  showToast('تم تسجيل حركة الخزنة وحفظها تلقائياً ✅');
+  showToast(type==='income' ? 'تمت إضافة الإيراد للخزنة' : 'تم تسجيل المصروف وخصمه من الخزنة');
 }
-
 function renderSafe(){
-  const total = DATA.safe.reduce((sum, tx) => {
-    return sum + (tx.type === 'income' ? tx.amount : -tx.amount);
-  }, 0);
-
-  document.getElementById('safeBalance').textContent = total.toLocaleString('ar-EG', {minimumFractionDigits: 2}) + ' ج.م';
+  const balance = DATA.safe.reduce((sum,t)=> sum + (t.type==='income' ? t.amount : -t.amount), 0);
+  document.getElementById('safeBalance').textContent = balance.toLocaleString('ar-EG',{minimumFractionDigits:2}) + ' ج.م';
   document.getElementById('safeEmpty').style.display = DATA.safe.length ? 'none' : 'block';
-
-  const body = document.getElementById('safeTableBody');
-  body.innerHTML = DATA.safe.slice().reverse().map(tx => `
-    <tr>
-      <td><span class="pill ${tx.type}">${tx.type === 'income' ? 'إيراد (زيادة)' : 'مصروف (خصم)'}</span></td>
-      <td>${tx.desc}</td>
-      <td style="font-family:ui-monospace,Menlo,monospace; font-weight:bold; color:${tx.type === 'income' ? 'var(--green)' : 'var(--red)'};">
-        ${tx.type === 'income' ? '+' : '-'}${tx.amount.toFixed(2)} ج.م
-      </td>
-      <td style="color:var(--muted);">${new Date(tx.at).toLocaleString('ar-EG')}</td>
-    </tr>
-  `).join('');
+  document.getElementById('safeTableBody').innerHTML = [...DATA.safe].reverse().map(t=>`<tr>
+    <td><span class="pill ${t.type}">${t.type==='income'?'إيراد':'مصروف'}</span></td>
+    <td>${t.desc}</td>
+    <td style="font-family:ui-monospace,Menlo,monospace;">${t.amount.toFixed(2)} ج.م</td>
+    <td style="color:var(--muted);">${new Date(t.at).toLocaleString('ar-EG')}</td>
+  </tr>`).join('');
 }
 
 /* =========================================================
@@ -637,137 +611,161 @@ async function addGoldsmith(){
   const name = document.getElementById('gsName').value.trim();
   const phone = document.getElementById('gsPhone').value.trim();
   if(!name){ showToast('أدخل اسم الصائغ'); return; }
-
-  DATA.goldsmiths.push({ id: 'gs_' + Date.now(), name, phone, addedAt: Date.now() });
+  DATA.goldsmiths.push({ id:'gs_'+Date.now(), name, phone, addedAt: Date.now() });
   await DB.write('goldsmiths', DATA.goldsmiths);
-  
-  document.getElementById('gsName').value = '';
-  document.getElementById('gsPhone').value = '';
-  refreshSupplierGoldsmithSelects();
-  renderGoldsmiths();
-  showToast('تم تسجيل الصائغ بنجاح');
+  document.getElementById('gsName').value=''; document.getElementById('gsPhone').value='';
+  refreshSupplierGoldsmithSelects(); renderGoldsmiths();
+  showToast('تمت إضافة الصائغ');
 }
-
 async function addGoldsmithTx(){
   const goldsmithId = document.getElementById('gsTxWho').value;
   const type = document.getElementById('gsTxType').value;
-  const grams = parseFloat(document.getElementById('gsTxGrams').value) || 0;
+  const grams = parseFloat(document.getElementById('gsTxGrams').value);
   const note = document.getElementById('gsTxNote').value.trim();
+  if(!goldsmithId || !grams){ showToast('اختر الصائغ وأدخل الوزن'); return; }
 
-  if(!goldsmithId){ showToast('اختر الصائغ من القائمة'); return; }
-  if(!grams || grams <= 0){ showToast('أدخل الوزن بالجرام بشكل صحيح'); return; }
-
-  DATA.goldsmithTx.push({
-    id: 'gtx_' + Date.now(),
-    goldsmithId,
-    type,
-    grams,
-    note,
-    at: Date.now()
-  });
-
+  DATA.goldsmithTx.push({ id:'gtx_'+Date.now(), goldsmithId, type, grams, note, at: Date.now() });
   await DB.write('goldsmith_tx', DATA.goldsmithTx);
-  document.getElementById('gsTxGrams').value = '';
-  document.getElementById('gsTxNote').value = '';
+  document.getElementById('gsTxGrams').value=''; document.getElementById('gsTxNote').value='';
   renderGoldsmiths();
-  showToast('تم تسجيل الحركة لحساب الصائغ بنجاح');
+  showToast('تم تسجيل حركة الرصيد');
 }
-
+function goldsmithBalance(id){
+  return DATA.goldsmithTx.filter(t=>t.goldsmithId===id).reduce((sum,t)=>{
+    if(t.type==='add') return sum + t.grams;
+    if(t.type==='receive' || t.type==='deduct') return sum - t.grams;
+    if(t.type==='settle') return 0;
+    return sum;
+  }, 0);
+}
 function renderGoldsmiths(){
-  refreshSupplierGoldsmithSelects();
-  const balancesDiv = document.getElementById('gsBalances');
-  
-  if(!DATA.goldsmiths.length){
-    balancesDiv.innerHTML = '<div class="empty">لا يوجد صاغة مسجلون</div>';
-  } else {
-    balancesDiv.innerHTML = DATA.goldsmiths.map(g => {
-      const txs = DATA.goldsmithTx.filter(t => t.goldsmithId === g.id);
-      const balanceGrams = txs.reduce((sum, t) => {
-        if(t.type === 'add') return sum + t.grams;
-        if(t.type === 'receive' || t.type === 'deduct') return sum - t.grams;
-        return sum;
-      }, 0);
-
-      return `
-        <div class="kv-row">
-          <span><b>${g.name}</b> (${g.phone || 'بدون هاتف'})</span>
-          <b style="color:${balanceGrams > 0 ? 'var(--gold-1)' : 'var(--cream)'};">${balanceGrams.toFixed(2)} جرام مسلّم له</b>
-        </div>
-      `;
-    }).join('');
-  }
+  document.getElementById('gsBalances').innerHTML = DATA.goldsmiths.map(g=>`
+    <div class="kv-row"><span>${g.name}</span><b style="color:var(--gold-1);">${goldsmithBalance(g.id).toFixed(2)} جم</b></div>
+  `).join('') || '<div class="empty">لا يوجد صاغة مسجلون بعد</div>';
 
   document.getElementById('gsEmpty').style.display = DATA.goldsmithTx.length ? 'none' : 'block';
-  const body = document.getElementById('gsTableBody');
-  body.innerHTML = DATA.goldsmithTx.slice().reverse().map(t => {
-    const gs = DATA.goldsmiths.find(g => g.id === t.goldsmithId);
-    const typeLabel = {
-      add: 'إضافة (تسليم ذهب)',
-      receive: 'استلام (استرجاع)',
-      deduct: 'خصم (هالك)',
-      settle: 'تسوية رصيد'
-    }[t.type];
-
-    return `
-      <tr>
-        <td><b>${gs ? gs.name : 'غير معروف'}</b></td>
-        <td>${typeLabel}</td>
-        <td style="font-family:ui-monospace,Menlo,monospace;">${t.grams.toFixed(2)} جم</td>
-        <td style="color:var(--muted);">${t.note || '—'}</td>
-      </tr>
-    `;
+  const typeLabels = {add:'إضافة',receive:'استلام',deduct:'خصم',settle:'تسوية'};
+  document.getElementById('gsTableBody').innerHTML = [...DATA.goldsmithTx].reverse().map(t=>{
+    const g = DATA.goldsmiths.find(x=>x.id===t.goldsmithId);
+    return `<tr><td>${g?g.name:'—'}</td><td>${typeLabels[t.type]}</td><td style="font-family:ui-monospace,Menlo,monospace;">${t.grams.toFixed(2)} جم</td><td style="color:var(--muted);">${t.note||'—'}</td></tr>`;
   }).join('');
 }
 
 /* =========================================================
-   BACKUP & RESTORE UTILITIES
+   BACKUP / RESTORE
 ========================================================= */
-function exportBackup(){
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(DATA, null, 2));
-  const dlAnchorElem = document.createElement('a');
-  dlAnchorElem.setAttribute("href", dataStr);
-  dlAnchorElem.setAttribute("download", `Hassan_Nassar_Jewelry_Backup_${new Date().toISOString().slice(0,10)}.json`);
-  document.body.appendChild(dlAnchorElem);
-  dlAnchorElem.click();
-  dlAnchorElem.remove();
-  showToast('تم استخراج النسخة الاحتياطية بنجاح 💾');
-}
-
-function importBackup(event){
-  const fileReader = new FileReader();
-  fileReader.onload = async function(e){
-    try {
-      const parsedData = JSON.parse(e.target.result);
-      if(parsedData.inventory && parsedData.customers){
-        DATA = parsedData;
-        await DB.write('inventory', DATA.inventory || []);
-        await DB.write('customers', DATA.customers || []);
-        await DB.write('suppliers', DATA.suppliers || []);
-        await DB.write('safe', DATA.safe || []);
-        await DB.write('goldsmiths', DATA.goldsmiths || []);
-        await DB.write('goldsmith_tx', DATA.goldsmithTx || []);
-        renderAll();
-        showToast('تمت استعادة البيانات بنجاح ✅');
-      } else {
-        showToast('ملف غير صالح أو بيانات مفقودة!');
-      }
-    } catch(err){
-      showToast('خطأ أثناء قراءة ملف النسخة الاحتياطية');
-    }
-  };
-  fileReader.readAsText(event.target.files[0]);
-}
-
 /* =========================================================
-   RENDER ALL COMPONENTS
+   GOOGLE DRIVE BACKUP
+   ---------------------------------------------------------
+   Honest note on "automatic" backup: browsers cannot run code while
+   closed, and Google's sign-in requires a real user click at least
+   once per browser session for privacy reasons. What this DOES do:
+   - One click connects the shop owner's Google account (kept signed
+     in for that browser going forward).
+   - Every time the program is OPENED, if "auto daily" is on and more
+     than 24h passed since the last backup, it silently backs up in
+     the background — no clicks needed, as long as the browser was
+     opened that day.
+   - It is not a background service running while the computer is off.
 ========================================================= */
+let gAccessToken = null;
+let gTokenClient = null;
+
+window.addEventListener('load', ()=>{
+  if(typeof google === 'undefined' || !google.accounts) return; // script blocked/offline — Drive features simply stay unavailable
+  gTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    callback: (resp)=>{
+      if(resp.error) return;
+      gAccessToken = resp.access_token;
+      onGdriveConnected();
+    }
+  });
+  // If previously connected in this browser, try a silent (no popup) token refresh.
+  if(localStorage.getItem('gdrive_connected') === '1'){
+    gTokenClient.requestAccessToken({ prompt: '' });
+  }
+});
+
+function connectGoogleDrive(){
+  if(!gTokenClient){ showToast('مكتبة Google لسه بتحمّل، حاول تاني بعد ثانية'); return; }
+  gTokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+function onGdriveConnected(){
+  localStorage.setItem('gdrive_connected','1');
+  document.getElementById('gdriveStatus').textContent = 'Google Drive: متصل ✅';
+  document.getElementById('gdriveConnectBtn').style.display = 'none';
+  document.getElementById('gdriveBackupBtn').style.display = 'inline-block';
+  document.getElementById('gdriveAutoWrap').style.display = 'inline-flex';
+  document.getElementById('gdriveAutoToggle').checked = localStorage.getItem('gdrive_auto') === '1';
+  maybeRunAutoBackup();
+}
+
+function toggleGdriveAuto(){
+  localStorage.setItem('gdrive_auto', document.getElementById('gdriveAutoToggle').checked ? '1' : '0');
+}
+
+async function backupToGoogleDrive(){
+  if(!gAccessToken){ showToast('اربط حساب Google Drive أولاً'); return; }
+  const metadata = { name: 'hn-jewelry-backup-'+new Date().toISOString().slice(0,10)+'.json', mimeType:'application/json' };
+  const boundary = 'hnboundary' + Date.now();
+  const body =
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+    `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(DATA)}\r\n--${boundary}--`;
+  try{
+    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      method:'POST',
+      headers:{ 'Authorization':'Bearer '+gAccessToken, 'Content-Type':'multipart/related; boundary='+boundary },
+      body
+    });
+    if(res.ok){
+      localStorage.setItem('gdrive_last_backup', Date.now());
+      showToast('تم رفع نسخة احتياطية على Google Drive بنجاح ☁️');
+    } else {
+      showToast('فشل الرفع على Drive — حاول تربط الحساب تاني');
+    }
+  }catch(e){ showToast('لا يوجد اتصال بالإنترنت الآن — حاول لاحقاً'); }
+}
+
+function maybeRunAutoBackup(){
+  if(localStorage.getItem('gdrive_auto') !== '1') return;
+  const last = parseInt(localStorage.getItem('gdrive_last_backup') || '0', 10);
+  if(Date.now() - last > 24*60*60*1000) backupToGoogleDrive();
+}
+
+function exportBackup(){
+  const blob = new Blob([JSON.stringify(DATA, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'hn-jewelry-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('تم تنزيل نسخة احتياطية كاملة');
+}
+async function importBackup(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const text = await file.text();
+  try{
+    const parsed = JSON.parse(text);
+    DATA = Object.assign({ inventory:[], customers:[], suppliers:[], safe:[], goldsmiths:[], goldsmithTx:[] }, parsed);
+    await DB.write('inventory', DATA.inventory);
+    await DB.write('customers', DATA.customers);
+    await DB.write('suppliers', DATA.suppliers);
+    await DB.write('safe', DATA.safe);
+    await DB.write('goldsmiths', DATA.goldsmiths);
+    await DB.write('goldsmith_tx', DATA.goldsmithTx);
+    renderAll();
+    showToast('تم استعادة البيانات بنجاح');
+  }catch(err){ showToast('ملف النسخة الاحتياطية غير صالح'); }
+}
+
 function renderAll(){
   renderKaratTabs();
-  renderInventory();
-  renderCustomers();
-  renderSuppliers();
-  renderSafe();
-  renderGoldsmiths();
+  refreshSupplierGoldsmithSelects();
+  renderInventory(); renderCustomers(); renderSuppliers(); renderSafe(); renderGoldsmiths();
 }
 </script>
 </body>
