@@ -58,71 +58,6 @@
 
   .about-card{ text-align:center; padding:40px; }
   .about-card .mark{ width:80px;height:80px;border-radius:22px; margin:0 auto 18px; background:linear-gradient(145deg,var(--gold-1),var(--gold-2)); display:flex;align-items:center;justify-content:center;font-weight:700;color:#151007;font-size:28px; }
-  .about-row{ display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:13px; max-width:420pxهذا هو **الملف المتكامل والكامل لشاشة الإعدادات والمستخدمين (الصفحة رقم 06)** ضمن سلسلتك الموحدة، مصمم بنفس الهوية البصرية، منطق الربط، والتنسيقات الفريدة لنظام **مجوهرات حسن نصار**.
-
-تمت المحافظة على كافة الأقسام (بيانات المحل، أسعار الذهب والفضة، إدارة المستخدمين، سجل العمليات، عن المطور، منطقة مسح البيانات، ولوحة حسابات الدخول) مع ضبط التنسيق بالكامل ليطابق نمط مشروعك.
-
-```html
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>مجوهرات حسن نصار | الإعدادات · المستخدمين · سجل العمليات · عن المطور</title>
-<style>
-  :root{
-    --bg:#08080A; --liquid-glass: rgba(24,24,28,0.45); --glass-border: rgba(255,255,255,0.08);
-    --gold-1:#FFD60A; --gold-2:#FF9F0A; --cream:#F5F5F7; --muted:#8E8E93; --blue:#0A84FF;
-    --green:#30D158; --red:#FF6961; --ease: cubic-bezier(.22,.61,.36,1);
-  }
-  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{height:100%;}
-  body{ font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Tahoma,Arial,sans-serif; background:var(--bg); color:var(--cream); min-height:100vh; }
-  .ambient{ position:fixed; inset:0; z-index:0; pointer-events:none;
-    background: radial-gradient(circle at 10% 10%, rgba(255,214,10,0.08), transparent 40%), radial-gradient(circle at 90% 20%, rgba(10,132,255,0.10), transparent 45%); }
-  .glass{ background:var(--liquid-glass); backdrop-filter: blur(25px) saturate(140%); -webkit-backdrop-filter: blur(25px) saturate(140%);
-    border:1px solid var(--glass-border); border-radius:20px; box-shadow:0 16px 50px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05); position:relative; overflow:hidden; }
-  .glass::before{ content:""; position:absolute; top:0; left:6%; right:6%; height:1px; background:linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent); opacity:.5; }
-  .wrap{ position:relative; z-index:1; max-width:1180px; margin:0 auto; padding:20px; }
-
-  .tabs{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
-  .tab{ padding:10px 18px; border-radius:12px; font-size:13.5px; cursor:pointer; color:var(--muted); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); transition:all 0.2s var(--ease); }
-  .tab.active{ color:var(--cream); background:linear-gradient(120deg, rgba(255,214,10,0.14), rgba(255,159,10,0.08)); box-shadow:inset 0 0 0 1px rgba(255,159,10,0.3); }
-  .panel{ display:none; } .panel.active{ display:block; }
-
-  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
-  .card{ padding:22px; }
-  .card h2{ font-size:14.5px; margin-bottom:14px; }
-  label{ font-size:12px; color:var(--muted); display:block; margin-bottom:6px; }
-  input,select,textarea{ width:100%; padding:11px 13px; border-radius:12px; margin-bottom:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); color:var(--cream); font-size:13.5px; outline:none; transition:all .25s var(--ease); font-family:inherit; }
-  input:focus,select:focus,textarea:focus{ border-color:var(--blue); box-shadow:0 0 0 4px rgba(10,132,255,0.16); transform:scale(1.01); background:rgba(10,132,255,0.05); }
-  .btn{ padding:12px 16px; border:none; border-radius:12px; font-size:13.5px; font-weight:700; cursor:pointer; transition:transform .18s var(--ease); }
-  .btn:active{ transform:scale(0.96); }
-  .btn-gold{ background:linear-gradient(120deg,var(--gold-1),var(--gold-2)); color:#151007; box-shadow:0 8px 22px rgba(255,159,10,.28); }
-  .btn-ghost{ background:rgba(255,255,255,0.06); color:var(--cream); border:1px solid rgba(255,255,255,0.1); }
-  .btn-danger{ background:rgba(255,105,97,0.14); color:#FF9791; border:1px solid rgba(255,105,97,0.3); }
-  .btn-sm{ padding:7px 12px; font-size:12px; border-radius:9px; }
-
-  .karat-preview{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:6px; }
-  .karat-preview .c{ background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:10px; text-align:center; font-size:12px; }
-  .karat-preview .c b{ display:block; color:var(--gold-1); font-family:ui-monospace,Menlo,monospace; font-size:13.5px; margin-top:3px; }
-
-  table{ width:100%; border-collapse:collapse; font-size:12.5px; }
-  thead th{ text-align:right; color:var(--muted); font-weight:600; font-size:11px; padding:8px; border-bottom:1px solid rgba(255,255,255,0.08); }
-  tbody td{ padding:9px 8px; border-bottom:1px solid rgba(255,255,255,0.05); }
-  .empty{ text-align:center; color:var(--muted); padding:26px; font-size:12.5px; }
-
-  .role-badge{ font-size:10.5px; padding:3px 9px; border-radius:8px; }
-  .role-badge.owner{ background:rgba(255,159,10,0.14); color:var(--gold-1); }
-  .role-badge.seller{ background:rgba(10,132,255,0.14); color:var(--blue); }
-  .role-badge.accountant{ background:rgba(48,209,88,0.14); color:var(--green); }
-
-  .perm-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
-  .perm-item{ display:flex; align-items:center; gap:8px; font-size:12.5px; background:rgba(255,255,255,0.03); padding:9px 12px; border-radius:10px; }
-  .perm-item input{ width:auto; margin:0; }
-
-  .about-card{ text-align:center; padding:40px; }
-  .about-card .mark{ width:80px;height:80px;border-radius:22px; margin:0 auto 18px; background:linear-gradient(145deg,var(--gold-1),var(--gold-2)); display:flex;align-items:center;justify-content:center;font-weight:700;color:#151007;font-size:28px; }
   .about-row{ display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:13px; max-width:420px; margin:0 auto; }
   .about-row span:last-child{ color:var(--gold-1); font-family:ui-monospace,Menlo,monospace; }
 
@@ -139,12 +74,12 @@
   .setup-gate{ display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
   .setup-card{ max-width:440px; width:100%; padding:32px; text-align:center; }
 
-  @media (max-width:800px){ .grid2{ grid-template-columns:1fr; } .perm-grid{ grid-template-columns:1fr; } }
+  @media (max-width:800px){ .grid2{ grid-template-columns:1fr; } }
 </style>
 
 <!-- Firebase & License Guard -->
-<script src="[https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js](https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js)"></script>
-<script src="[https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js](https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js)"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 <script src="license-guard.js"></script>
 <script src="firestore-db.js"></script>
 
@@ -158,7 +93,7 @@
   <a href="hassan-nassar-jewelry-05-barcode-reports.html" class="hnNavLink">🏷️ الباركود والتقارير</a>
   <a href="hassan-nassar-jewelry-07-transactions.html" class="hnNavLink">🔄 الحركات</a>
   <a href="hassan-nassar-jewelry-08-finance-final.html" class="hnNavLink">💵 الحسابات المالية</a>
-  <a href="hassan-nassar-jewelry-06-settings-users.html" class="hnNavLink active">⚙️ الإعدادات</a>
+  <a href="hassan-nassar-jewelry-06-settings-users.html" class="hnNavLink">⚙️ الإعدادات</a>
 </div>
 <style>
   .hnNavLink{ display:inline-flex; align-items:center; gap:5px; text-decoration:none; color:#B8B8BE; font-size:12.5px; padding:7px 12px; border-radius:10px; margin-left:2px; }
@@ -288,19 +223,19 @@
 
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);">
         <input type="checkbox" id="wipeAll" onchange="toggleWipeAll(this.checked)" style="width:16px;height:16px;">
-        <label for="wipeAll" style="font-weight:700;font-size:13px;margin:0;">تحديد كل الأقسام</label>
+        <label for="wipeAll" style="font-weight:700;font-size:13px;">تحديد كل الأقسام</label>
       </div>
 
       <div id="wipeSections" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
-        <label style="display:flex;align-items:center;gap:10px;font-size:13px;width:100%;padding:4px 0;margin:0;"><input type="checkbox" class="wipeItem" value="inventory" style="flex:0 0 auto;width:16px;height:16px;"><span style="flex:1 1 auto;min-width:0;">📦 المخزون</span></label>
-        <label style="display:flex;align-items:center;gap:10px;font-size:13px;width:100%;padding:4px 0;margin:0;"><input type="checkbox" class="wipeItem" value="customers" style="flex:0 0 auto;width:16px;height:16px;"><span style="flex:1 1 auto;min-width:0;">👥 العملاء</span></label>
-        <label style="display:flex;align-items:center;gap:10px;font-size:13px;width:100%;padding:4px 0;margin:0;"><input type="checkbox" class="wipeItem" value="suppliers" style="flex:0 0 auto;width:16px;height:16px;"><span style="flex:1 1 auto;min-width:0;">🚚 الموردين</span></label>
-        <label style="display:flex;align-items:center;gap:10px;font-size:13px;width:100%;padding:4px 0;margin:0;"><input type="checkbox" class="wipeItem" value="safe" style="flex:0 0 auto;width:16px;height:16px;"><span style="flex:1 1 auto;min-width:0;">💰 الخزنة</span></label>
-        <label style="display:flex;align-items:center;gap:10px;font-size:13px;width:100%;padding:4px 0;margin:0;"><input type="checkbox" class="wipeItem" value="goldsmiths,goldsmith_tx" style="flex:0 0 auto;width:16px;height:16px;"><span style="flex:1 1 auto;min-width:0;">🔨 الصاغة وحساباتهم</span></label>
-        <label style="display:flex;align-items:center;gap:10px;font-size:13px;width:100%;padding:4px 0;margin:0;"><input type="checkbox" class="wipeItem" value="invoices" style="flex:0 0 auto;width:16px;height:16px;"><span style="flex:1 1 auto;min-width:0;">🧾 الفواتير</span></label>
-        <label style="display:flex;align-items:center;gap:10px;font-size:13px;width:100%;padding:4px 0;margin:0;"><input type="checkbox" class="wipeItem" value="layaway,old_gold,repairs,returns" style="flex:0 0 auto;width:16px;height:16px;"><span style="flex:1 1 auto;min-width:0;">🔄 الحركات (حجز/كسر/تصليح/مرتجع)</span></label>
-        <label style="display:flex;align-items:center;gap:10px;font-size:13px;width:100%;padding:4px 0;margin:0;"><input type="checkbox" class="wipeItem" value="credit_ledger,opex,workshop_loss" style="flex:0 0 auto;width:16px;height:16px;"><span style="flex:1 1 auto;min-width:0;">📊 الحسابات المالية (آجل/مصروفات/فاقد)</span></label>
-        <label style="display:flex;align-items:center;gap:10px;font-size:13px;width:100%;padding:4px 0;margin:0;"><input type="checkbox" class="wipeItem" value="audit_log" style="flex:0 0 auto;width:16px;height:16px;"><span style="flex:1 1 auto;min-width:0;">📜 سجل العمليات</span></label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;width:100%;padding:4px 0;"><input type="checkbox" class="wipeItem" value="inventory" style="flex:0 0 auto;width:16px;height:16px;"><span style="flex:1 1 auto;min-width:0;">📦 المخزون</span></label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;width:100%;padding:4px 0;"><input type="checkbox" class="wipeItem" value="customers" style="flex:0 0 auto;width:16px;height:16px;"><span style="flex:1 1 auto;min-width:0;">👥 العملاء</span></label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;width:100%;padding:4px 0;"><input type="checkbox" class="wipeItem" value="suppliers" style="flex:0 0 auto;width:16px;height:16px;"><span style="flex:1 1 auto;min-width:0;">🚚 الموردين</span></label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;width:100%;padding:4px 0;"><input type="checkbox" class="wipeItem" value="safe" style="flex:0 0 auto;width:16px;height:16px;"><span style="flex:1 1 auto;min-width:0;">💰 الخزنة</span></label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;width:100%;padding:4px 0;"><input type="checkbox" class="wipeItem" value="goldsmiths,goldsmith_tx" style="flex:0 0 auto;width:16px;height:16px;"><span style="flex:1 1 auto;min-width:0;">🔨 الصاغة وحساباتهم</span></label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;width:100%;padding:4px 0;"><input type="checkbox" class="wipeItem" value="invoices" style="flex:0 0 auto;width:16px;height:16px;"><span style="flex:1 1 auto;min-width:0;">🧾 الفواتير</span></label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;width:100%;padding:4px 0;"><input type="checkbox" class="wipeItem" value="layaway,old_gold,repairs,returns" style="flex:0 0 auto;width:16px;height:16px;"><span style="flex:1 1 auto;min-width:0;">🔄 الحركات (حجز/كسر/تصليح/مرتجع)</span></label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;width:100%;padding:4px 0;"><input type="checkbox" class="wipeItem" value="credit_ledger,opex,workshop_loss" style="flex:0 0 auto;width:16px;height:16px;"><span style="flex:1 1 auto;min-width:0;">📊 الحسابات المالية (آجل/مصروفات/فاقد)</span></label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;width:100%;padding:4px 0;"><input type="checkbox" class="wipeItem" value="audit_log" style="flex:0 0 auto;width:16px;height:16px;"><span style="flex:1 1 auto;min-width:0;">📜 سجل العمليات</span></label>
       </div>
 
       <label style="font-size:12.5px;color:var(--muted);">كلمة سر المطور</label>
@@ -455,7 +390,7 @@ function renderPermPreview(){
   const role = document.getElementById('usrRole').value;
   const perms = ROLE_PERMS[role];
   document.getElementById('permPreview').innerHTML = perms.map(p=>`
-    <label class="perm-item" style="margin:0;"><input type="checkbox" data-key="${p.key}" ${p.checked?'checked':''}> ${p.label}</label>
+    <label class="perm-item"><input type="checkbox" data-key="${p.key}" ${p.checked?'checked':''}> ${p.label}</label>
   `).join('');
 }
 async function addUser(){
