@@ -186,7 +186,7 @@
   .qa-btn{
     padding:16px 12px; border-radius:14px; text-align:center; cursor:pointer;
     background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
-    transition:all .18s var(--ease); font-size:12.5px; display:block;
+    transition:all .18s var(--ease); font-size:12.5px;
   }
   .qa-btn:active{ transform:scale(0.95); }
   .qa-btn .ic{ font-size:20px; margin-bottom:6px; display:block; }
@@ -233,7 +233,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="license-guard.js"></script>
-  <script src="firestore-db.js"></script>
+<script src="firestore-db.js"></script>
 </head>
 <body>
 <div id="hnGlobalNav" style="display:flex;align-items:center;gap:2px;padding:9px 14px;background:#0c0c0e;border-bottom:1px solid rgba(255,255,255,0.08);overflow-x:auto;white-space:nowrap;position:sticky;top:0;z-index:9997;direction:rtl;font-family:inherit;">
@@ -271,19 +271,19 @@
       <div class="txt"><b>حسن نصار</b><small>الفرع الرئيسي</small></div>
     </div>
 
-    <a href="hassan-nassar-jewelry-02-dashboard.html" class="nav-item active"><span class="ic">🏠</span> الرئيسية</a>
-    <a href="hassan-nassar-jewelry-04-invoice.html" class="nav-item"><span class="ic">🧾</span> فاتورة بيع جديدة</a>
-    <a href="hassan-nassar-jewelry-03-data-core.html" class="nav-item"><span class="ic">📦</span> المخزون بالعيار</a>
-    <a href="hassan-nassar-jewelry-08-finance-final.html" class="nav-item"><span class="ic">👥</span> العملاء</a>
-    <a href="hassan-nassar-jewelry-08-finance-final.html" class="nav-item"><span class="ic">🚚</span> الموردين</a>
-    <a href="hassan-nassar-jewelry-07-transactions.html" class="nav-item"><span class="ic">🔨</span> حسابات الصاغة</a>
-    <a href="hassan-nassar-jewelry-03-data-core.html" class="nav-item"><span class="ic">💰</span> الخزنة</a>
+    <div class="nav-item active"><span class="ic">🏠</span> الرئيسية</div>
+    <div class="nav-item"><span class="ic">🧾</span> فاتورة بيع جديدة</div>
+    <div class="nav-item"><span class="ic">📦</span> المخزون بالعيار</div>
+    <div class="nav-item"><span class="ic">👥</span> العملاء</div>
+    <div class="nav-item"><span class="ic">🚚</span> الموردين</div>
+    <div class="nav-item"><span class="ic">🔨</span> حسابات الصاغة</div>
+    <div class="nav-item"><span class="ic">💰</span> الخزنة</div>
 
     <div class="nav-section-label">تقارير وإعدادات</div>
-    <a href="hassan-nassar-jewelry-05-barcode-reports.html" class="nav-item"><span class="ic">📊</span> التقارير والجرد</a>
-    <a href="hassan-nassar-jewelry-05-barcode-reports.html" class="nav-item"><span class="ic">🖨️</span> باركود وملصقات</a>
-    <a href="hassan-nassar-jewelry-06-settings-users.html" class="nav-item"><span class="ic">⚙️</span> الإعدادات</a>
-    <a href="#" class="nav-item" onclick="alert('تطبيق مجوهرات حسن نصار - تطوير مخصص'); return false;"><span class="ic">ℹ️</span> عن المطور</a>
+    <div class="nav-item"><span class="ic">📊</span> التقارير والجرد</div>
+    <div class="nav-item"><span class="ic">🖨️</span> باركود وملصقات</div>
+    <div class="nav-item"><span class="ic">⚙️</span> الإعدادات</div>
+    <div class="nav-item"><span class="ic">ℹ️</span> عن المطور</div>
   </div>
 
   <!-- ===== MAIN ===== -->
@@ -365,9 +365,9 @@
               <span class="muted" id="lastUpdate">آخر تحديث: الآن</span>
             </div>
             <div class="karat-input-row">
-              <label for="basePrice">سعر جرام عيار 21 (يدوي)</label>
+              <label>سعر جرام عيار 21 (يدوي)</label>
               <input type="number" id="basePrice" value="3850" step="1">
-              <button class="qa-btn gold" style="padding:12px 16px; border:none; cursor:pointer;" onclick="fetchLivePrice()">✅ تأكيد وتحديث الشاشة</button>
+              <button class="qa-btn gold" style="padding:12px 16px;" onclick="fetchLivePrice()">✅ تأكيد وتحديث الشاشة</button>
             </div>
             <div class="karat-grid" id="karatGrid"></div>
           </div>
@@ -380,10 +380,10 @@
           <div class="panel glass">
             <div class="panel-head"><h2>إجراءات سريعة</h2></div>
             <div class="qa-grid">
-              <a href="hassan-nassar-jewelry-04-invoice.html" class="qa-btn gold"><span class="ic">🧾</span>فاتورة بيع</a>
-              <a href="hassan-nassar-jewelry-04-invoice.html?mode=old_gold" class="qa-btn"><span class="ic">♻️</span>شراء كسر</a>
-              <a href="hassan-nassar-jewelry-03-data-core.html?action=add" class="qa-btn"><span class="ic">📦</span>إضافة صنف</a>
-              <a href="hassan-nassar-jewelry-05-barcode-reports.html" class="qa-btn"><span class="ic">🖨️</span>طباعة باركود</a>
+              <div class="qa-btn gold"><span class="ic">🧾</span>فاتورة بيع</div>
+              <div class="qa-btn"><span class="ic">♻️</span>شراء كسر</div>
+              <div class="qa-btn"><span class="ic">📦</span>إضافة صنف</div>
+              <div class="qa-btn"><span class="ic">🖨️</span>طباعة باركود</div>
             </div>
           </div>
 
@@ -425,23 +425,26 @@
 </div>
 
 <script>
+/* DB engine now comes from firestore-db.js (loaded in <head>) — shared live data for every user */
 function fmtMoney(n){ return Math.round(n).toLocaleString('ar-EG'); }
 
 async function loadRealKpis(){
-  if(typeof DB === 'undefined') return;
   const ok = await DB.tryAutoConnect();
-  if(!ok) return;
+  if(!ok) return; // no data connected yet — KPI cards stay at their zero defaults
 
   const inventory = await DB.read('inventory', []);
   const safe = await DB.read('safe', []);
   const invoices = await DB.read('invoices', []);
 
+  // إجمالي وزن المخزون المتاح (كل الأعيرة)
   const totalWeight = inventory.filter(i=>i.status==='available').reduce((s,i)=> s + (i.netW||0), 0);
   document.getElementById('kpiInventoryWeight').textContent = totalWeight.toLocaleString('ar-EG',{maximumFractionDigits:1}) + ' جم';
 
+  // رصيد الخزنة
   const safeBalance = safe.reduce((s,t)=> s + (t.type==='income'? t.amount : -t.amount), 0);
   document.getElementById('kpiSafeBalance').textContent = fmtMoney(safeBalance) + ' ج.م';
 
+  // مبيعات وفواتير اليوم / أمس
   const todayStart = new Date(); todayStart.setHours(0,0,0,0);
   const yesterdayStart = new Date(todayStart.getTime() - 86400000);
   const todayInvoices = invoices.filter(inv => inv.at >= todayStart.getTime());
@@ -467,6 +470,7 @@ async function loadRealKpis(){
     deltaEl.textContent = 'لا توجد مبيعات اليوم بعد';
   }
 
+  // أعلى عيار مبيعاً اليوم (حسب الوزن المباع)
   const karatWeights = {};
   todayInvoices.forEach(inv => (inv.items||[]).forEach(it => {
     karatWeights[it.karat] = (karatWeights[it.karat]||0) + (it.netW||0);
@@ -512,7 +516,7 @@ if(window.HN_FSDB){
     }, err => console.warn('activity feed listener error:', err));
 }
 
-/* ===== ticker data ===== */
+/* ===== ticker data (duplicated once for seamless loop) ===== */
 const tickItems = [
   {k:'عيار 24', v:'٤٤٠٠ ج.م', chip:'up', chipv:'+0.6%'},
   {k:'عيار 21', v:'٣٨٥٠ ج.م', chip:'up', chipv:'+0.6%'},
@@ -535,7 +539,12 @@ function renderTicker(){
 }
 renderTicker();
 
-/* ===== karat price calculator ===== */
+/* ===== karat price calculator =====
+   Formula (as specified):
+   price18 = price21 * (18/21)
+   price24 = price21 * (24/21)
+   Generalized for any karat: priceK = price21 * (K/21)
+*/
 const KARATS = [24,21,18,14,12,9];
 function renderKaratGrid(){
   const base = parseFloat(document.getElementById('basePrice').value) || 0;
@@ -549,16 +558,17 @@ document.getElementById('basePrice').addEventListener('input', renderKaratGrid);
 renderKaratGrid();
 
 function fetchLivePrice(){
+  // Manual entry is the primary, fully-working flow — the karat grid
+  // already updates live as you type in the price field above.
+  // This button is just a confirmation until a live API provider is connected.
   renderKaratGrid();
   document.getElementById('lastUpdate').textContent = 'آخر تحديث: الآن (يدوي) — ' + new Date().toLocaleTimeString('ar-EG');
-  const btn = event?.target;
-  if(btn){
-    btn.style.opacity = .6;
-    setTimeout(()=>{ btn.style.opacity = 1; }, 300);
-  }
+  const btn = event.target;
+  btn.style.opacity = .6;
+  setTimeout(()=>{ btn.style.opacity = 1; }, 300);
 }
 
-/* ===== weekly chart ===== */
+/* ===== fake weekly chart ===== */
 function renderChart(){
   const data = [38,52,41,60,47,73,55];
   const max = Math.max(...data);
@@ -567,7 +577,7 @@ function renderChart(){
 }
 renderChart();
 
-/* ===== spotlight command palette ===== */
+/* ===== spotlight command palette (Cmd/Ctrl+K) ===== */
 const overlay = document.getElementById('spotlightOverlay');
 const spInput = document.getElementById('spotlightInput');
 document.addEventListener('keydown', (e)=>{
@@ -582,13 +592,17 @@ document.addEventListener('keydown', (e)=>{
 });
 overlay.addEventListener('click', (e)=>{ if(e.target === overlay) overlay.classList.remove('show'); });
 
-/* ===== barcode scanner listener ===== */
+/* ===== barcode scanner listener (keyboard-wedge style) =====
+   Most USB barcode scanners type digits very fast then send Enter.
+   This listens globally, buffers fast keystrokes, and on Enter
+   treats the buffer as a scanned code (only when not typing in a field).
+*/
 let scanBuffer = '';
 let lastKeyTime = 0;
 document.addEventListener('keydown', (e)=>{
-  if(document.activeElement.tagName === 'INPUT') return;
+  if(document.activeElement.tagName === 'INPUT') return; // don't hijack normal typing
   const now = Date.now();
-  if(now - lastKeyTime > 60) scanBuffer = '';
+  if(now - lastKeyTime > 60) scanBuffer = ''; // reset if typing is too slow to be a scanner
   lastKeyTime = now;
   if(e.key === 'Enter'){
     if(scanBuffer.length >= 4){
